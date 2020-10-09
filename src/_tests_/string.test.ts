@@ -1,5 +1,5 @@
-import { types, validate } from '../';
-import { allTypes, failedValidation, successfulValidation } from '../testCommon';
+import { types, validate } from '..';
+import { allTypes, failedValidation, successfulValidation } from './common';
 
 describe('type tests', () => {
   test('string is valid', () => {
