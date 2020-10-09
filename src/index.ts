@@ -1,4 +1,4 @@
-const helloWorld = () => console.log('Hello World');
+const helloWorld = (): void => console.log('Hello World');
 
 export default {
   helloWorld,
