@@ -1,4 +1,5 @@
-import { types, validate } from '..';
+import { fields, validate } from '..';
+import { ObjectAdditionalFieldType } from '../types';
 import { allTypes, failedValidation as failedFieldValidation } from './common';
 
 const successfulValidation = (value: any) => ({
@@ -21,7 +22,7 @@ const failedValidationRecursive = (errors: any) => ({
 
 describe('type tests', () => {
   test('object is valid', () => {
-    const schema = types.object({ fields: {} });
+    const schema = fields.object({ fields: {} });
     const value = {};
 
     const validationResult = validate({ schema, value });
@@ -31,7 +32,7 @@ describe('type tests', () => {
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'object');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = types.object({ fields: {} });
+    const schema = fields.object({ fields: {} });
 
     const validationResult = validate({ schema, value });
 
@@ -44,14 +45,14 @@ describe('fields', () => {
     [{}, {}, 'strip', {}],
     [{ a: 'a' }, {}, 'strip', {}],
     [{ a: 'a' }, {}, 'merge', { a: 'a' }],
-    [{ a: 'a' }, { a: types.string() }, 'strip', { a: 'a' }],
-    [{ a: 'a', b: 'a' }, { a: types.string(), b: types.string() }, 'strip', { a: 'a', b: 'a' }],
+    [{ a: 'a' }, { a: fields.string() }, 'strip', { a: 'a' }],
+    [{ a: 'a', b: 'a' }, { a: fields.string(), b: fields.string() }, 'strip', { a: 'a', b: 'a' }],
   ];
 
   test.each(successfulTests)(
     'input=%s schema=%s additionalField=%s expected=%s is valid',
     (input, objectSchema, additionalFields, expected) => {
-      const schema = types.object({ fields: objectSchema, additionalFields });
+      const schema = fields.object({ fields: objectSchema, additionalFields });
 
       const validationResult = validate({ schema, value: input });
 
@@ -62,15 +63,15 @@ describe('fields', () => {
   const invalidTests: [any, any, ObjectAdditionalFieldType, string[]][] = [
     [{ a: '' }, {}, 'error', ['a']],
     [{ a: '', b: '' }, {}, 'error', ['a', 'b']],
-    [{ a: '' }, { a: types.string() }, 'strip', ['a']],
-    [{}, { a: types.string() }, 'strip', ['a']],
-    [{}, { a: types.string() }, 'merge', ['a']],
-    [{ a: '', b: '' }, { a: types.string(), b: types.string() }, 'strip', ['a', 'b']],
+    [{ a: '' }, { a: fields.string() }, 'strip', ['a']],
+    [{}, { a: fields.string() }, 'strip', ['a']],
+    [{}, { a: fields.string() }, 'merge', ['a']],
+    [{ a: '', b: '' }, { a: fields.string(), b: fields.string() }, 'strip', ['a', 'b']],
   ];
   test.each(invalidTests)(
     'input=%s schema=%s additionalFields=%s errorField=%s is invalid',
     (input, objectSchema, additionalFields, errorFields) => {
-      const schema = types.object({ fields: objectSchema, additionalFields });
+      const schema = fields.object({ fields: objectSchema, additionalFields });
 
       const validationResult = validate({ schema, value: input });
 
@@ -81,16 +82,16 @@ describe('fields', () => {
 
 describe('recursion', () => {
   const successfulTests: [any, any, ObjectAdditionalFieldType, any][] = [
-    [{ a: { b: 'a' } }, { a: { b: types.string() } }, 'strip', { a: { b: 'a' } }],
+    [{ a: { b: 'a' } }, { a: { b: fields.string() } }, 'strip', { a: { b: 'a' } }],
     [{ a: { b: 'a' } }, { a: {} }, 'strip', { a: {} }],
-    [{ a: { b: { c: 'a' } } }, { a: { b: { c: types.string() } } }, 'strip', { a: { b: { c: 'a' } } }],
+    [{ a: { b: { c: 'a' } } }, { a: { b: { c: fields.string() } } }, 'strip', { a: { b: { c: 'a' } } }],
     [{ a: {} }, {}, 'strip', {}],
   ];
 
   test.each(successfulTests)(
     'input=%s schema=%s additionalField=%s expected=%s',
     (input, objectSchema, additionalFields, expected) => {
-      const schema = types.object({ fields: objectSchema, additionalFields });
+      const schema = fields.object({ fields: objectSchema, additionalFields });
 
       const validationResult = validate({ schema, value: input });
 
@@ -99,10 +100,10 @@ describe('recursion', () => {
   );
 
   const invalidTests: [any, any, ObjectAdditionalFieldType, any][] = [
-    [{ a: {} }, { a: { b: types.string() } }, 'strip', { a: { b: [expect.any(String)] } }],
+    [{ a: {} }, { a: { b: fields.string() } }, 'strip', { a: { b: [expect.any(String)] } }],
     [
       { a: { c: {} } },
-      { a: { b: types.string(), c: { d: types.string() } } },
+      { a: { b: fields.string(), c: { d: fields.string() } } },
       'strip',
       { a: { c: { d: [expect.any(String)] } } },
     ],
@@ -111,7 +112,7 @@ describe('recursion', () => {
   test.each(invalidTests)(
     'input=%s schema=%s additionalFields=%s errorField=%s',
     (input, objectSchema, additionalFields, errorFields) => {
-      const schema = types.object({ fields: objectSchema, additionalFields });
+      const schema = fields.object({ fields: objectSchema, additionalFields });
 
       const validationResult = validate({ schema, value: input });
 

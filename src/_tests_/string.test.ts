@@ -1,9 +1,9 @@
-import { types, validate } from '..';
+import { fields, validate } from '..';
 import { allTypes, failedValidation, successfulValidation } from './common';
 
 describe('type tests', () => {
   test('string is valid', () => {
-    const schema = types.string();
+    const schema = fields.string();
     const value = 'a';
 
     const validationResult = validate({ schema, value });
@@ -13,7 +13,7 @@ describe('type tests', () => {
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'string');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = types.string();
+    const schema = fields.string();
 
     const validationResult = validate({ schema, value });
 
@@ -29,7 +29,7 @@ describe('required tests', () => {
     ['a', false, true],
   ];
   test.each(requiredTests)('value=%s empty=%s valid=%s', (value, empty, valid) => {
-    const schema = types.string({ empty });
+    const schema = fields.string({ empty });
 
     const validationResult = validate({ schema, value });
 
