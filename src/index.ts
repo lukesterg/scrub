@@ -43,22 +43,35 @@ class ValidationState<SchemaType = any> {
 const validateType = (validate: ValidationState, type: TypeOfTypes): boolean =>
   validate.assert(typeof validate.value === type, `Value must be of type ${type}`);
 
-interface StringOptions {
+export interface StringOptions {
   readonly empty?: boolean;
 }
 
 type ValidationCallback = (validate: ValidationState) => void;
 
-const string = (options: StringOptions = {}) => {
-  const result: ValidationCallback = (state: ValidationState) => {
+export interface TypedScrubField<T> extends ScrubField {}
+export type FieldType<T> = T extends TypedScrubField<infer U> ? U : never;
+export type ObjectType<T> = { [key in keyof T]: FieldType<T[key]> };
+
+export interface ScrubField {
+  validate: ValidationCallback;
+}
+
+const isScrubField = (val: any) => val?.validate && typeof val.validate === 'function';
+
+const string = (options: StringOptions = {}): TypedScrubField<string> => {
+  const validateString: ValidationCallback = (state: ValidationState) => {
     if (!validateType(state, 'string')) return;
     state.assert(options?.empty || state.value !== '', 'Please enter a value');
   };
 
-  return result;
+  return { validate: validateString };
 };
 
-interface ObjectOptions<T = any> {
+type ObjectOfUserScrubFields = { [key: string]: ScrubField | ObjectOfUserScrubFields };
+type ObjectOfScrubFields<T> = { [key in keyof T]: ScrubField };
+
+export interface ObjectOptions<T extends ObjectOfUserScrubFields> {
   readonly additionalFields?: ObjectAdditionalFieldType;
   readonly fields: T;
 }
@@ -69,40 +82,40 @@ const fromEntries = <ValueType>(entries: [string, ValueType][]) =>
     return last;
   }, {} as any) as { [key: string]: ValueType };
 
-const wrapInnerObjectFieldsWithValidator = <T>(options: ObjectOptions<T>): ObjectOptions<T> => {
+const wrapInnerObjectFieldsWithValidator = <T extends ObjectOfUserScrubFields>(
+  options: ObjectOptions<T>
+): ObjectOfScrubFields<T['fields']> => {
   const entries = Object.entries(options.fields);
-  const objectEntries = entries.filter(([_, schema]) => typeof schema === 'object');
+  const objectEntries = entries.filter(([_, schema]) => !isScrubField(schema));
   if (objectEntries.length === 0) {
-    return options;
+    return options.fields as any;
   }
 
   objectEntries.forEach((entry) => {
-    entry[1] = object({ ...options, fields: entry[1] });
+    entry[1] = object({ ...options, fields: entry[1] as any });
   });
 
-  return { ...options, fields: fromEntries(objectEntries) as T };
+  return fromEntries(objectEntries) as ObjectOfScrubFields<T['fields']>;
 };
 
-export const object = <T>(options: ObjectOptions<T>) => {
-  options = wrapInnerObjectFieldsWithValidator(options);
-  const result: ValidationCallback = (state: ValidationState<ObjectOptions>) => {
+export const object = <T extends ObjectOfUserScrubFields>(options: ObjectOptions<T>): TypedScrubField<T> => {
+  const fields = wrapInnerObjectFieldsWithValidator(options);
+
+  const validateObject: ValidationCallback = (state: ValidationState<ObjectOptions<T>>) => {
     if (!validateType(state, 'object')) return;
 
-    let success = true;
     let finalValue: any = options.additionalFields === 'merge' ? state.value : {};
     const errors: any = {};
 
-    for (const field in options.fields) {
+    for (const field in fields) {
       if (!(field in state.value)) {
-        success = false;
         errors[field] = [`Please add the field ${field}`];
         finalValue = undefined;
         continue;
       }
 
-      const validationResult = validate({ schema: options.fields[field], value: state.value[field] });
+      const validationResult = validate({ schema: fields[field], value: state.value[field] });
       if (!validationResult.success) {
-        success = false;
         errors[field] = validationResult.errors;
         finalValue = undefined;
         continue;
@@ -115,7 +128,7 @@ export const object = <T>(options: ObjectOptions<T>) => {
 
     if (options.additionalFields === 'error') {
       Object.keys(state.value)
-        .filter((field) => !(options.fields as any)[field])
+        .filter((field) => !(fields as any)[field])
         .forEach((field) => (errors[field] = ['Please remove field']));
     }
 
@@ -123,10 +136,10 @@ export const object = <T>(options: ObjectOptions<T>) => {
     state.setObjectErrors(errors);
   };
 
-  return result;
+  return { validate: validateObject };
 };
 
-export interface ValidationOptions<SchemaType> {
+export interface ValidationOptions<SchemaType extends ScrubField> {
   readonly schema: SchemaType;
   readonly value: any;
 }
@@ -137,9 +150,12 @@ export interface ValidationResult<ValueType> {
   readonly value: ValueType | undefined;
 }
 
-export const validate = <T>(options: Readonly<ValidationOptions<T>>): ValidationResult<T> => {
+export const validate = <SchemaType extends ScrubField>(
+  options: Readonly<ValidationOptions<SchemaType>>
+): ValidationResult<SchemaType> => {
   const state = new ValidationState(options.value, options.schema);
-  ((options.schema as any) as ValidationCallback)(state);
+
+  options.schema.validate(state);
 
   const success = (Array.isArray(state.errors) ? state.errors.length : Object.keys(state.errors).length) === 0;
 
@@ -151,6 +167,6 @@ export const validate = <T>(options: Readonly<ValidationOptions<T>>): Validation
 };
 
 export const types = {
-  string: (string as any) as (options?: Partial<StringOptions>) => string,
-  object: (object as any) as <T>(options?: Partial<ObjectOptions<T>>) => T,
+  string,
+  object,
 };

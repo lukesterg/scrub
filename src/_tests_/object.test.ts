@@ -79,7 +79,7 @@ describe('fields', () => {
   );
 });
 
-describe.only('recursion', () => {
+describe('recursion', () => {
   const successfulTests: [any, any, ObjectAdditionalFieldType, any][] = [
     [{ a: { b: 'a' } }, { a: { b: types.string() } }, 'strip', { a: { b: 'a' } }],
     [{ a: { b: 'a' } }, { a: {} }, 'strip', { a: {} }],
