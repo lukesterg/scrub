@@ -13,6 +13,8 @@ export interface StringOptions {
   readonly empty?: boolean;
 }
 
+export interface NumberOptions {}
+
 export type ObjectOfUserScrubFields = { [key: string]: ScrubField | ObjectOfUserScrubFields };
 export interface ObjectOptions<T extends ObjectOfUserScrubFields> {
   readonly additionalFields?: ObjectAdditionalFieldType;
