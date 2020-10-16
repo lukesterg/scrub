@@ -1,18 +1,19 @@
 import {
   ScrubField,
-  TypedScrubField,
   ValidationCallback,
   ValidationState,
   ObjectOptions,
   ObjectOfUserScrubFields,
+  ObjectSchema,
+  ObjectSchemaType,
 } from '../types';
 import { fromEntries } from '../utilities';
-import { validate } from '../validator';
+import { ScrubFieldBase, validate } from '../validator';
 import { validateType } from '../validators/validateType';
 
 const isScrubField = (val: any) => val?.validate && typeof val.validate === 'function';
 
-type ObjectOfScrubFields<T> = { [key in keyof T]: ScrubField };
+type ObjectOfScrubFields<T> = { [key in keyof T]: ScrubFieldBase };
 
 const wrapInnerObjectFieldsWithValidator = <T extends ObjectOfUserScrubFields>(
   options: ObjectOptions<T>
@@ -30,8 +31,16 @@ const wrapInnerObjectFieldsWithValidator = <T extends ObjectOfUserScrubFields>(
   return fromEntries(objectEntries) as ObjectOfScrubFields<T['fields']>;
 };
 
-export const object = <T extends ObjectOfUserScrubFields>(options: ObjectOptions<T>): TypedScrubField<T> => {
+export const object = <T extends ObjectOfUserScrubFields>(
+  options: ObjectOptions<T>
+): ScrubField<T, ObjectSchema<T>> => {
   const fields = wrapInnerObjectFieldsWithValidator(options);
+  const schema: ObjectSchema<T> = {
+    additionalFields: options.additionalFields || 'strip',
+    fields: fromEntries(
+      Object.entries(options.fields).map(([key, value]) => [key, (value as any).schema])
+    ) as ObjectSchemaType<T>,
+  };
 
   const validateObject: ValidationCallback = (state: ValidationState<ObjectOptions<T>>) => {
     if (!validateType(state, 'object')) return;
@@ -68,5 +77,5 @@ export const object = <T extends ObjectOfUserScrubFields>(options: ObjectOptions
     state.setObjectErrors(errors);
   };
 
-  return { validate: validateObject };
+  return { validate: validateObject, schema };
 };

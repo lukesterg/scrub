@@ -120,3 +120,34 @@ describe('recursion', () => {
     }
   );
 });
+
+describe('schema test', () => {
+  const defaultSettings = {
+    fields: {},
+    additionalFields: 'strip',
+  };
+
+  test('default options', () => {
+    const schema = fields.object({ fields: {} });
+    expect(schema.schema).toEqual(defaultSettings);
+  });
+
+  test('default options can be overridden', () => {
+    const schema = fields.object({ fields: {}, additionalFields: 'error' });
+    expect(schema.schema).toEqual({ ...defaultSettings, additionalFields: 'error' });
+  });
+
+  test('inner fields schemas are exposed', () => {
+    const schema = fields.object({ fields: { a: fields.object({ fields: {} }) } });
+    expect(schema.schema).toEqual({ ...defaultSettings, fields: { a: defaultSettings } });
+  });
+
+  test('nested object schemas are exposed', () => {
+    const schema = fields.object({ fields: { a: fields.object({ fields: { b: fields.object({ fields: {} }) } }) } });
+
+    expect(schema.schema).toEqual({
+      ...defaultSettings,
+      fields: { a: { ...defaultSettings, fields: { b: defaultSettings } } },
+    });
+  });
+});

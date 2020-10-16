@@ -46,13 +46,13 @@ class ValidationState<SchemaType = any> {
 
 export type { ValidationState };
 
-export interface ScrubField {
+export interface ScrubFieldBase {
   validate: ValidationCallback;
 }
 
 export type ValidationCallback = (validate: ValidationState) => void;
 
-export interface ValidationOptions<SchemaType extends ScrubField> {
+export interface ValidationOptions<SchemaType extends ScrubFieldBase> {
   readonly schema: SchemaType;
   readonly value: any;
 }
@@ -63,7 +63,7 @@ export interface ValidationResult<ValueType> {
   readonly value: ValueType | undefined;
 }
 
-export const validate = <SchemaType extends ScrubField>(
+export const validate = <SchemaType extends ScrubFieldBase>(
   options: Readonly<ValidationOptions<SchemaType>>
 ): ValidationResult<SchemaType> => {
   const state = new ValidationState(options.value, options.schema);

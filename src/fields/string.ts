@@ -1,12 +1,18 @@
-import { TypedScrubField, StringOptions } from '../types';
+import { ScrubField, StringOptions } from '../types';
 import { ValidationCallback, ValidationState } from '../validator';
 import { validateType } from '../validators/validateType';
 
-export const string = (options: StringOptions = {}): TypedScrubField<string> => {
+const defaultStringOptions: StringOptions = {
+  empty: false,
+};
+
+export const string = (options?: Partial<StringOptions>): ScrubField<string, StringOptions> => {
+  const schema = { ...defaultStringOptions, ...options };
+
   const validate: ValidationCallback = (state: ValidationState) => {
     if (!validateType(state, 'string')) return;
-    state.assert(options?.empty || state.value !== '', 'Please enter a value');
+    state.assert(schema.empty || state.value !== '', 'Please enter a value');
   };
 
-  return { validate };
+  return { validate, schema };
 };

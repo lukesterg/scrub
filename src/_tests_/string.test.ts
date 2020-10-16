@@ -36,3 +36,19 @@ describe('required tests', () => {
     expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
   });
 });
+
+describe('schema test', () => {
+  const defaultSettings = {
+    empty: false,
+  };
+
+  test('default options', () => {
+    const schema = fields.string();
+    expect(schema.schema).toEqual(defaultSettings);
+  });
+
+  test('default options can be overridden', () => {
+    const schema = fields.string({ empty: true });
+    expect(schema.schema).toEqual({ ...defaultSettings, empty: true });
+  });
+});
