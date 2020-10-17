@@ -13,7 +13,7 @@ describe('type tests', () => {
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'number');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = fields.number();
+    const schema = fields.number({ allowTypes: []});
 
     const validationResult = validate({ schema, value });
 
@@ -22,7 +22,9 @@ describe('type tests', () => {
 });
 
 describe('schema test', () => {
-  const defaultSettings = {};
+  const defaultSettings = {
+    allowTypes: ['all'],
+  };
 
   test('default options', () => {
     const schema = fields.number();
@@ -77,5 +79,77 @@ describe('length test', () => {
     const validationResult = validate({ schema, value });
 
     expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+  });
+});
+
+describe('string conversion', () => {
+  test.each([
+    ['1', 1],
+    ['+1', 1],
+    ['123, 000', 123000],
+    ['-1', -1],
+    ['1.1', 1.1],
+    ['-1.1', -1.1],
+    ['--1', undefined],
+    ['.', undefined],
+    ['1.', 1],
+    ['0', 0],
+    ['1.1.1', undefined],
+    ['.1', 0.1],
+    ['0.1', 0.1],
+    ['-9007199254740992', -9007199254740992],
+    ['9007199254740992', 9007199254740992],
+    ['-9007199254740993', undefined],
+    ['9007199254740993', undefined],
+    ['0.1234567890123456', 0.1234567890123456],
+    ['0.12345678901234567', undefined],
+    ['a', undefined],
+  ])('value=%s expected=%s', (value, expected) => {
+    const schema = fields.number({ allowTypes: ['string'] });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
+  });
+
+  test.each([
+    ['1', 4, 1],
+    ['-1', 4, -1],
+    ['0.123', 4, 0.123],
+    ['0.1234', 4, 0.1234],
+    ['0.12345', 4, 0.1234],
+    ['0.12345678901234567', 4, 0.1234],
+    ['-0.12345678901234567', 4, -0.1234],
+  ])('value=%s precision=%s expected=%s', (value, precision, expected) => {
+    const schema = fields.number({ allowTypes: ['string'], precision });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
+  });
+});
+
+describe('precision', () => {
+  test('negative precision throws', () => {
+    const action = () => fields.number({ allowTypes: ['string'], precision: -1 });
+    expect(action).toThrow();
+  });
+
+  test.each([
+    [1.1, 2, 1.1],
+    [1.12, 2, 1.12],
+    [1.123, 2, 1.123],
+    [-1.1, 2, -1.1],
+    [-1.12, 2, -1.12],
+    [-1.123, 2, -1.123],
+    [1, 0, 1],
+    [-1, 0, -1],
+    [0, 0, 0],
+  ])('value=%s precision=%s expected=%s', (value, precision, expected) => {
+    const schema = fields.number({ allowTypes: ['string'], precision });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
   });
 });

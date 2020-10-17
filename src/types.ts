@@ -25,8 +25,11 @@ export interface StringOptions {
 }
 
 export type RangeBoundary = number | { value: number; inclusive: boolean };
+export type AllowedNumberTypes = 'string' | 'all';
 
 export interface NumberOptions {
+  allowTypes: AllowedNumberTypes[] | AllowedNumberTypes;
+  precision?: number;
   min?: RangeBoundary;
   max?: RangeBoundary;
 }
