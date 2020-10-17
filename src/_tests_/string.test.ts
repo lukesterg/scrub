@@ -52,3 +52,36 @@ describe('schema test', () => {
     expect(schema.schema).toEqual({ ...defaultSettings, empty: true });
   });
 });
+
+describe('length test', () => {
+  test('max length cannot be less than min length', () => {
+    const action = () => fields.string({ minLength: 2, maxLength: 1 });
+    expect(action).toThrow();
+  });
+
+  test.each([
+    ['', false],
+    ['a', true],
+    ['ab', true],
+    ['abc', true],
+    ['abcd', false],
+  ])('value=%s min=1 max=3 valid=%s', (value, valid) => {
+    const schema = fields.string({ minLength: 1, maxLength: 3, empty: true });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+  });
+
+  test.each([
+    ['', false],
+    ['a', true],
+    ['ab', false],
+  ])('value=%s min=1 max=1 valid=%s', (value, valid) => {
+    const schema = fields.string({ minLength: 1, maxLength: 1, empty: true });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+  });
+});

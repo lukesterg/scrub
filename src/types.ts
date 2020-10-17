@@ -20,9 +20,16 @@ export type ObjectSchemaType<T> = { [key in keyof T]: SchemaType<T[key]> };
 
 export interface StringOptions {
   readonly empty: boolean;
+  readonly minLength?: number;
+  readonly maxLength?: number;
 }
 
-export interface NumberOptions {}
+export type RangeBoundary = number | { value: number; inclusive: boolean };
+
+export interface NumberOptions {
+  min?: RangeBoundary;
+  max?: RangeBoundary;
+}
 
 export type ObjectOfUserScrubFields = { [key: string]: ScrubFieldBase | ObjectOfUserScrubFields };
 export interface ObjectOptions<Fields extends ObjectOfUserScrubFields> {

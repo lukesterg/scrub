@@ -3,3 +3,10 @@ export const fromEntries = <ValueType>(entries: [string, ValueType][]) =>
     last[key] = value;
     return last;
   }, {} as any) as { [key: string]: ValueType };
+
+export class ScrubError extends Error {
+  constructor(m: string) {
+    super(m);
+    Object.setPrototypeOf(this, ScrubError.prototype);
+  }
+}
