@@ -40,7 +40,7 @@ describe('required tests', () => {
 describe('schema test', () => {
   const defaultSettings = {
     empty: false,
-    allowTypes: ['all'],
+    allowTypes: [],
   };
 
   test('default options', () => {

@@ -6,7 +6,7 @@ import { validateType } from '../validators/validateType';
 
 const defaultStringOptions: StringOptions = {
   empty: false,
-  allowTypes: ['all'],
+  allowTypes: [],
 };
 
 const buildRange = (schema: StringOptions): RangeMinMax => ({

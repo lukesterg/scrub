@@ -6,7 +6,7 @@ import { validateType } from '../validators/validateType';
 import { ScrubError } from '../utilities';
 
 const defaultNumberOptions: NumberOptions = {
-  allowTypes: ['all'],
+  allowTypes: [],
 };
 
 const buildRange = (schema: NumberOptions): RangeMinMax => ({

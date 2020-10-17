@@ -13,7 +13,7 @@ describe('type tests', () => {
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'number');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = fields.number({ allowTypes: []});
+    const schema = fields.number({ allowTypes: [] });
 
     const validationResult = validate({ schema, value });
 
@@ -23,7 +23,7 @@ describe('type tests', () => {
 
 describe('schema test', () => {
   const defaultSettings = {
-    allowTypes: ['all'],
+    allowTypes: [],
   };
 
   test('default options', () => {
