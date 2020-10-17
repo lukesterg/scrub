@@ -17,8 +17,10 @@ export type FieldType<T> = T extends TypedScrubField<infer U> ? U : never;
 export type ObjectType<T> = { [key in keyof T]: FieldType<T[key]> };
 export type SchemaType<T> = T extends ScrubFieldSchema<infer U> ? U : never;
 export type ObjectSchemaType<T> = { [key in keyof T]: SchemaType<T[key]> };
+export type AllowedStringTypes = 'number' | 'boolean' | 'bigint' | 'all';
 
 export interface StringOptions {
+  readonly allowTypes: AllowedStringTypes[] | AllowedStringTypes;
   readonly empty: boolean;
   readonly minLength?: number;
   readonly maxLength?: number;

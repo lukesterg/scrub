@@ -13,7 +13,7 @@ describe('type tests', () => {
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'string');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = fields.string();
+    const schema = fields.string({ allowTypes: [] });
 
     const validationResult = validate({ schema, value });
 
@@ -40,6 +40,7 @@ describe('required tests', () => {
 describe('schema test', () => {
   const defaultSettings = {
     empty: false,
+    allowTypes: ['all'],
   };
 
   test('default options', () => {
@@ -83,5 +84,24 @@ describe('length test', () => {
     const validationResult = validate({ schema, value });
 
     expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+  });
+});
+
+describe('type conversion', () => {
+  test.each([
+    [1, '1'],
+    [-1, '-1'],
+    [1.1, '1.1'],
+    [-1.1, '-1.1'],
+    [BigInt(123), '123'],
+    [BigInt(-123), '-123'],
+    [true, 'true'],
+    [false, 'false'],
+  ])('value=%s expected=%s', (value, expected) => {
+    const schema = fields.string({ allowTypes: 'all' });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(successfulValidation(expected));
   });
 });
