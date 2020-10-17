@@ -1,17 +1,18 @@
 import { DomainOptions, ScrubField, UserDomainOptions } from '../types';
 import { ValidationCallback, ValidationState } from '../validator';
-import { validateDomain, domainMaxLength } from '../validators/domain';
+import { validateDomain, maximumDomainLength } from '../validators/domain';
 import { string } from './string';
 
 const defaultDomainOptions: DomainOptions = {
-  allow: 'all',
-  maxLength: domainMaxLength,
+  allow: 'domain',
+  maxLength: maximumDomainLength,
+  empty: false,
 };
 
 // Reference: https://en.wikipedia.org/wiki/Domain_Name_System
 export const domain = (options?: Partial<UserDomainOptions>): ScrubField<string, DomainOptions> => {
   const schema = { ...defaultDomainOptions, ...options };
-  const { validate: stringValidate } = string();
+  const { validate: stringValidate } = string(options);
 
   const validate: ValidationCallback = (state: ValidationState) => {
     stringValidate(state);

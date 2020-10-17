@@ -5,6 +5,7 @@ export type ObjectAdditionalFieldType = 'strip' | 'merge' | 'error';
 export { ValidationState, ScrubFieldBase, ValidationCallback, ValidationOptions, ValidationResult } from './validator';
 import { ScrubFieldBase } from './validator';
 import { DomainValidationOptions } from './validators/domain';
+import { EmailValidationOptions } from './validators/email';
 
 interface TypedScrubField<T> extends ScrubFieldBase {}
 
@@ -28,9 +29,12 @@ export type SchemaType<T> = T extends ScrubFieldSchema<infer U> ? U : never;
 export type ObjectSchemaType<T> = { [key in keyof T]: SchemaType<T[key]> };
 export type AllowedStringTypes = 'number' | 'boolean' | 'bigint' | 'all';
 
-export interface StringOptions extends Partial<MaxLength>, Partial<MinLength> {
-  readonly allowTypes: AllowedStringTypes[] | AllowedStringTypes;
+interface Empty {
   readonly empty: boolean;
+}
+
+export interface StringOptions extends Partial<MaxLength>, Partial<MinLength>, Empty {
+  readonly allowTypes: AllowedStringTypes[] | AllowedStringTypes;
 }
 
 export type RangeBoundary = number | { value: number; inclusive: boolean };
@@ -54,6 +58,10 @@ export interface ObjectSchema<Fields extends ObjectOfUserScrubFields>
   readonly fields: ObjectSchemaType<Fields>;
 }
 
-export interface UserDomainOptions extends DomainValidationOptions {}
+export interface UserDomainOptions extends DomainValidationOptions, Empty {}
 
 export interface DomainOptions extends UserDomainOptions, MaxLength {}
+
+export interface UserEmailOptions extends EmailValidationOptions, Empty {}
+
+export interface EmailOptions extends UserEmailOptions, MaxLength {}

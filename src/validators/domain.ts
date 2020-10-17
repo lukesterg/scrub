@@ -1,7 +1,7 @@
 import { Allow, generateShouldAllow } from './allow';
 
 // See https://tools.ietf.org/html/rfc1035 (section 2.3.4)
-export const domainMaxLength = 255;
+export const maximumDomainLength = 255;
 
 // 4 segments of numbers from 0-255 (eg: 123.123.123.123)
 const validateIpv4 = (value: string) =>
@@ -11,7 +11,7 @@ const validateIpv4 = (value: string) =>
 
 const validateHostName = (value: string) => {
   const domainLabelMaxLength = 63;
-  if (/[^a-z0-9._-]/.test(value) || value.length > domainMaxLength) {
+  if (/[^a-z0-9._-]/.test(value) || value.length > maximumDomainLength) {
     return false;
   }
 
