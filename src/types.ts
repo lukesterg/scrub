@@ -4,11 +4,20 @@ export type ObjectAdditionalFieldType = 'strip' | 'merge' | 'error';
 
 export { ValidationState, ScrubFieldBase, ValidationCallback, ValidationOptions, ValidationResult } from './validator';
 import { ScrubFieldBase } from './validator';
+import { DomainValidationOptions } from './validators/domain';
 
 interface TypedScrubField<T> extends ScrubFieldBase {}
 
 interface ScrubFieldSchema<T> {
   schema: T;
+}
+
+interface MaxLength {
+  maxLength: number;
+}
+
+interface MinLength {
+  minLength: number;
 }
 
 export interface ScrubField<BaseType, Schema> extends TypedScrubField<BaseType>, ScrubFieldSchema<Schema> {}
@@ -19,11 +28,9 @@ export type SchemaType<T> = T extends ScrubFieldSchema<infer U> ? U : never;
 export type ObjectSchemaType<T> = { [key in keyof T]: SchemaType<T[key]> };
 export type AllowedStringTypes = 'number' | 'boolean' | 'bigint' | 'all';
 
-export interface StringOptions {
+export interface StringOptions extends Partial<MaxLength>, Partial<MinLength> {
   readonly allowTypes: AllowedStringTypes[] | AllowedStringTypes;
   readonly empty: boolean;
-  readonly minLength?: number;
-  readonly maxLength?: number;
 }
 
 export type RangeBoundary = number | { value: number; inclusive: boolean };
@@ -46,3 +53,7 @@ export interface ObjectSchema<Fields extends ObjectOfUserScrubFields>
   extends Required<Omit<ObjectOptions<Fields>, 'fields'>> {
   readonly fields: ObjectSchemaType<Fields>;
 }
+
+export interface UserDomainOptions extends DomainValidationOptions {}
+
+export interface DomainOptions extends UserDomainOptions, MaxLength {}
