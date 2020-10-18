@@ -1,4 +1,4 @@
-import { ScrubField, StringOptions } from '../types';
+import { Merge, ScrubField, StringOptions } from '../types';
 import { ValidationCallback, ValidationState } from '../validator';
 import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
 import { RangeMinMax, sanityTestInput, validateRange } from '../validators/range';
@@ -22,8 +22,8 @@ const conversion: Conversions<StringOptions> = {
   bigint: (state) => state.setValue(state.value.toString()),
 };
 
-export const string = (options?: Partial<StringOptions>): ScrubField<string, StringOptions> => {
-  const schema = { ...defaultStringOptions, ...options };
+export const string = <T extends Partial<StringOptions>>(options?: T): ScrubField<string, Merge<T, StringOptions>> => {
+  const schema = { ...defaultStringOptions, ...options } as Merge<T, StringOptions>;
   const range = buildRange(schema);
 
   sanityTestInput(range);

@@ -23,6 +23,7 @@ interface MinLength {
 
 export interface ScrubField<BaseType, Schema> extends TypedScrubField<BaseType>, ScrubFieldSchema<Schema> {}
 
+export type Merge<Destination, Override> = Omit<Destination, keyof Override> & Override;
 export type FieldType<T> = T extends TypedScrubField<infer U> ? U : never;
 export type ObjectType<T> = { [key in keyof T]: FieldType<T[key]> };
 export type SchemaType<T> = T extends ScrubFieldSchema<infer U> ? U : never;
@@ -65,3 +66,11 @@ export interface DomainOptions extends UserDomainOptions, MaxLength {}
 export interface UserEmailOptions extends EmailValidationOptions, Empty {}
 
 export interface EmailOptions extends UserEmailOptions, MaxLength {}
+
+export interface PasswordOptions extends StringOptions {
+  requireUpperCase: boolean;
+  requireLowerCase: boolean;
+  requireNumber: boolean;
+  requireSymbol: boolean;
+  ignoreRequirementsIfLengthIsAtLeast?: number;
+}
