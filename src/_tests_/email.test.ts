@@ -24,10 +24,30 @@ const userTests = [
 
 const emailTests = userTests.concat(domainTests) as [any, string, boolean][];
 
-test.each(emailTests)('allow=%s value=%s isValid=%s', (allow, value, isValid) => {
-  const schema = fields.email({ allow: allow as any });
+describe('email verification tests', () => {
+  test.each(emailTests)('allow=%s value=%s isValid=%s', (allow, value, isValid) => {
+    const schema = fields.email({ allow: allow as any });
 
-  const validationResult = validate({ schema, value });
+    const validationResult = validate({ schema, value });
 
-  expect(validationResult).toEqual(isValid ? successfulValidation(value) : failedValidation());
+    expect(validationResult).toEqual(isValid ? successfulValidation(value) : failedValidation());
+  });
+});
+
+describe('schema test', () => {
+  const defaultSettings = {
+    allow: ['domain'],
+    maxLength: 320,
+    empty: false,
+  };
+
+  test('default options', () => {
+    const schema = fields.email();
+    expect(schema.schema).toEqual(defaultSettings);
+  });
+
+  test('default options can be overridden', () => {
+    const schema = fields.email({ allow: ['ip'] });
+    expect(schema.schema).toEqual({ ...defaultSettings, allow: ['ip'] });
+  });
 });

@@ -4,7 +4,7 @@ import { validateDomain, maximumDomainLength } from '../validators/domain';
 import { string } from './string';
 
 const defaultDomainOptions: DomainOptions = {
-  allow: 'domain',
+  allow: ['domain'],
   maxLength: maximumDomainLength,
   empty: false,
 };

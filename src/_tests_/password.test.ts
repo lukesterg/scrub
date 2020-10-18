@@ -2,7 +2,7 @@ import { PasswordOptions } from '../types';
 import { fields, validate } from '..';
 import { failedValidation, successfulValidation } from './common';
 
-describe('verification tests', () => {
+describe('password verification tests', () => {
   type PasswordTestEntry = [Partial<PasswordOptions>, string, number];
   // prettier-ignore
   const passwordTests: PasswordTestEntry[] = [

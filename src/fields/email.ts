@@ -7,7 +7,7 @@ import { UserEmailOptions, EmailOptions } from '../types';
 const defaultEmailOptions: EmailOptions = {
   maxLength: maximumEmailLength,
   empty: false,
-  allow: 'domain',
+  allow: ['domain'],
 };
 
 export const email = (options?: Partial<UserEmailOptions>): ScrubField<string, EmailOptions> => {
