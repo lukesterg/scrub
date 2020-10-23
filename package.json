@@ -1,5 +1,5 @@
 {
-  "name": "scrub",
+  "name": "@framed/scrub",
   "version": "0.0.1",
   "description": "Object validation",
   "main": "lib/index.js",

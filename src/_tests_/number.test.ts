@@ -153,3 +153,26 @@ describe('precision', () => {
     expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
   });
 });
+
+describe('choices', () => {
+  test('empty choice throws', () => {
+    const perform = () => fields.number({ choices: [] });
+    expect(perform).toThrow();
+  });
+
+  const choicesTest: [number[], any, boolean][] = [
+    [[1], '1', true],
+    [[1], 2, false],
+    [[1, 2.1], 1, true],
+    [[1, 2.1], 2.1, true],
+    [[1, 2.1], 3, false],
+  ];
+
+  test.each(choicesTest)('choices=%s value=%s valid=%s', (choices, value, valid) => {
+    const schema = fields.number({ choices, allowTypes: 'string' });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(valid ? successfulValidation(+value) : failedValidation());
+  });
+});

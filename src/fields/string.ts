@@ -1,6 +1,7 @@
 import { Merge, ScrubField, StringOptions } from '../types';
 import { ValidationCallback, ValidationState } from '../validator';
 import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
+import { generateChoices } from '../validators/choice';
 import { RangeMinMax, sanityTestInput, validateRange } from '../validators/range';
 import { validateType } from '../validators/validateType';
 
@@ -25,6 +26,7 @@ const conversion: Conversions<StringOptions> = {
 export const string = <T extends Partial<StringOptions>>(options?: T): ScrubField<string, Merge<T, StringOptions>> => {
   const schema = { ...defaultStringOptions, ...options } as Merge<T, StringOptions>;
   const range = buildRange(schema);
+  const choices = generateChoices(options);
 
   sanityTestInput(range);
   const performConversion = allowedTypeConverter(schema.allowTypes, 'string', conversion);
@@ -32,6 +34,8 @@ export const string = <T extends Partial<StringOptions>>(options?: T): ScrubFiel
   const validate: ValidationCallback = (state: ValidationState) => {
     if (!performConversion(state, schema)) return;
     if (!validateType(state, 'string')) return;
+    if (!choices(state)) return;
+
     state.assert(schema.empty || state.value !== '', 'Please enter a value');
     validateRange(state, {
       ...range,

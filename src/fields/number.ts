@@ -4,6 +4,7 @@ import { validateRange, expandRangeBoundary, sanityTestInput, RangeMinMax } from
 import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
 import { validateType } from '../validators/validateType';
 import { ScrubError } from '../utilities';
+import { generateChoices } from '../validators/choice';
 
 const defaultNumberOptions: NumberOptions = {
   allowTypes: [],
@@ -52,6 +53,7 @@ const setNumberPrecision = (value: number, precision: number) => +value.toFixed(
 export const number = (options?: Partial<NumberOptions>): ScrubField<number, NumberOptions> => {
   const schema = { ...defaultNumberOptions, ...options };
   const range = buildRange(schema);
+  const choices = generateChoices(options);
 
   if (schema.precision && schema.precision < 0) {
     throw new ScrubError('precision must be a positive value');
@@ -63,6 +65,7 @@ export const number = (options?: Partial<NumberOptions>): ScrubField<number, Num
   const validate: ValidationCallback = (state: ValidationState) => {
     if (!performConversion(state, schema)) return;
     if (!validateType(state, 'number')) return;
+    if (!choices(state)) return;
 
     if (schema.precision !== undefined) {
       setNumberPrecision(state.value, schema.precision);
