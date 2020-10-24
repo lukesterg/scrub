@@ -7,6 +7,7 @@ import { ScrubFieldBase } from './validator';
 import { Choices } from './validators/choice';
 import { DomainValidationOptions } from './validators/domain';
 import { EmailValidationOptions } from './validators/email';
+import { UriValidationOptions } from './validators/uri';
 
 export interface TypedScrubField<T> extends ScrubFieldBase {}
 
@@ -81,3 +82,5 @@ export interface PasswordOptions extends StringOptions {
   requireSymbol: boolean;
   ignoreRequirementsIfLengthIsAtLeast?: number;
 }
+
+export interface UriOptions extends UriValidationOptions, Empty {}

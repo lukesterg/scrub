@@ -4,3 +4,4 @@ export { number } from './number';
 export { domain } from './domain';
 export { email } from './email';
 export { password } from './password';
+export { uri } from './uri';
