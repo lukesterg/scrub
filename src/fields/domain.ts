@@ -20,8 +20,6 @@ export const domain = (options?: Partial<UserDomainOptions>): ScrubField<string,
       return;
     }
 
-    schema.allow;
-
     state.assert(validateDomain(state.value, schema), 'Please enter a valid domain');
   };
 
