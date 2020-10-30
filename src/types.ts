@@ -4,10 +4,12 @@ export type ObjectAdditionalFieldType = 'strip' | 'merge' | 'error';
 
 export { ValidationState, ScrubFieldBase, ValidationCallback, ValidationOptions, ValidationResult } from './validator';
 import { ScrubFieldBase } from './validator';
+import { Choices } from './validators/choice';
 import { DomainValidationOptions } from './validators/domain';
 import { EmailValidationOptions } from './validators/email';
+import { UriValidationOptions } from './validators/uri';
 
-interface TypedScrubField<T> extends ScrubFieldBase {}
+export interface TypedScrubField<T> extends ScrubFieldBase {}
 
 interface ScrubFieldSchema<T> {
   schema: T;
@@ -34,15 +36,21 @@ interface Empty {
   readonly empty: boolean;
 }
 
-export interface StringOptions extends Partial<MaxLength>, Partial<MinLength>, Empty {
-  readonly allowTypes: AllowedStringTypes[] | AllowedStringTypes;
+interface Allow<T extends string> {
+  allowTypes: T | T[];
 }
+
+export interface StringOptions
+  extends Partial<MaxLength>,
+    Partial<MinLength>,
+    Empty,
+    Partial<Choices<string>>,
+    Allow<AllowedNumberTypes> {}
 
 export type RangeBoundary = number | { value: number; inclusive: boolean };
 export type AllowedNumberTypes = 'string' | 'all';
 
-export interface NumberOptions {
-  allowTypes: AllowedNumberTypes[] | AllowedNumberTypes;
+export interface NumberOptions extends Allow<AllowedNumberTypes>, Partial<Choices<number>> {
   precision?: number;
   min?: RangeBoundary;
   max?: RangeBoundary;
@@ -74,3 +82,5 @@ export interface PasswordOptions extends StringOptions {
   requireSymbol: boolean;
   ignoreRequirementsIfLengthIsAtLeast?: number;
 }
+
+export interface UriOptions extends UriValidationOptions, Empty {}

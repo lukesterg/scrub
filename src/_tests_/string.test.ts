@@ -105,3 +105,26 @@ describe('type conversion', () => {
     expect(validationResult).toEqual(successfulValidation(expected));
   });
 });
+
+describe('choices', () => {
+  test('empty choice throws', () => {
+    const perform = () => fields.string({ choices: [] });
+    expect(perform).toThrow();
+  });
+
+  const choicesTest: [string[], any, boolean][] = [
+    [['a'], 'a', true],
+    [['a'], 'b', false],
+    [['a', '2.1'], 'a', true],
+    [['a', '2.1'], 2.1, true],
+    [['a', '2.1'], 3, false],
+  ];
+
+  test.each(choicesTest)('choices=%s value=%s valid=%s', (choices, value, valid) => {
+    const schema = fields.string({ choices, allowTypes: 'all' });
+
+    const validationResult = validate({ schema, value });
+
+    expect(validationResult).toEqual(valid ? successfulValidation(value.toString()) : failedValidation());
+  });
+});

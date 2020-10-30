@@ -1,6 +1,6 @@
 {
-  "name": "scrub",
-  "version": "0.0.1",
+  "name": "@framed/scrub",
+  "version": "0.0.1-alpha.0",
   "description": "Object validation",
   "main": "lib/index.js",
   "scripts": {
