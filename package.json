@@ -2,6 +2,7 @@
   "name": "@framed/scrub",
   "version": "0.0.1-alpha.0",
   "description": "Object validation",
+  "types": "lib/index.d.ts",
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
