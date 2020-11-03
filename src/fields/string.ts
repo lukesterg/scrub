@@ -1,48 +1,48 @@
-import { Merge, ScrubField, StringOptions } from '../types';
-import { ValidationCallback, ValidationState } from '../validator';
-import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
-import { generateChoices } from '../validators/choice';
-import { RangeMinMax, sanityTestInput, validateRange } from '../validators/range';
-import { validateType } from '../validators/validateType';
+// import { Merge, ScrubField, StringOptions } from '../types';
+// import { ValidationCallback, ValidationState } from '../validator';
+// import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
+// import { generateChoices } from '../validators/choice';
+// import { RangeMinMax, sanityTestInput, validateRange } from '../validators/range';
+// import { validateType } from '../validators/validateType';
 
-const defaultStringOptions: StringOptions = {
-  empty: false,
-  allowTypes: [],
-};
+// const defaultStringOptions: StringOptions = {
+//   empty: false,
+//   allowTypes: [],
+// };
 
-const buildRange = (schema: StringOptions): RangeMinMax => ({
-  minInclusive: true,
-  maxInclusive: true,
-  ...(schema.minLength ? { min: schema.minLength } : {}),
-  ...(schema.maxLength ? { max: schema.maxLength } : {}),
-});
+// const buildRange = (schema: StringOptions): RangeMinMax => ({
+//   minInclusive: true,
+//   maxInclusive: true,
+//   ...(schema.minLength ? { min: schema.minLength } : {}),
+//   ...(schema.maxLength ? { max: schema.maxLength } : {}),
+// });
 
-const conversion: Conversions<StringOptions> = {
-  number: (state) => state.setValue(state.value.toString()),
-  boolean: (state) => state.setValue(state.value.toString()),
-  bigint: (state) => state.setValue(state.value.toString()),
-};
+// const conversion: Conversions<StringOptions> = {
+//   number: (state) => state.setValue(state.value.toString()),
+//   boolean: (state) => state.setValue(state.value.toString()),
+//   bigint: (state) => state.setValue(state.value.toString()),
+// };
 
-export const string = <T extends Partial<StringOptions>>(options?: T): ScrubField<string, Merge<T, StringOptions>> => {
-  const schema = { ...defaultStringOptions, ...options } as Merge<T, StringOptions>;
-  const range = buildRange(schema);
-  const choices = generateChoices(options);
+// export const string = <T extends Partial<StringOptions>>(options?: T): ScrubField<string, Merge<T, StringOptions>> => {
+//   const schema = { ...defaultStringOptions, ...options } as Merge<T, StringOptions>;
+//   const range = buildRange(schema);
+//   const choices = generateChoices(options);
 
-  sanityTestInput(range);
-  const performConversion = allowedTypeConverter(schema.allowTypes, 'string', conversion);
+//   sanityTestInput(range);
+//   const performConversion = allowedTypeConverter(schema.allowTypes, 'string', conversion);
 
-  const validate: ValidationCallback = (state: ValidationState) => {
-    if (!performConversion(state, schema)) return;
-    if (!validateType(state, 'string')) return;
-    if (!choices(state)) return;
+//   const validate: ValidationCallback = (state: ValidationState) => {
+//     if (!performConversion(state, schema)) return;
+//     if (!validateType(state, 'string')) return;
+//     if (!choices(state)) return;
 
-    state.assert(schema.empty || state.value !== '', 'Please enter a value');
-    validateRange(state, {
-      ...range,
-      value: state.value.length,
-      units: 'characters',
-    });
-  };
+//     state.assert(schema.empty || state.value !== '', 'Please enter a value');
+//     validateRange(state, {
+//       ...range,
+//       value: state.value.length,
+//       units: 'characters',
+//     });
+//   };
 
-  return { validate, schema };
-};
+//   return { validate, schema };
+// };

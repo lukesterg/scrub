@@ -1,4 +1,6 @@
-import { ValidationState, TypeOfTypes } from '../types';
+import { assert } from '../utilities';
 
-export const validateType = (validate: ValidationState, type: TypeOfTypes): boolean =>
-  validate.assert(typeof validate.value === type, `Value must be of type ${type}`);
+export type TypeOfTypes = 'string' | 'number' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function';
+
+export const validateType = (value: any, type: TypeOfTypes) =>
+  assert(typeof value === type, `Value must be of type ${type}`);

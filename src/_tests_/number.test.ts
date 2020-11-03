@@ -1,39 +1,35 @@
-import { fields, validate } from '..';
-import { allTypes, failedValidation, successfulValidation } from './common';
+import { fields } from '..';
+import { allTypes, failedValidation, successfulValidation, successOrFailure } from './common';
 
 describe('type tests', () => {
   test('number is valid', () => {
-    const schema = fields.number();
-    const value = 1;
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(successfulValidation(value));
+    const expected = 1;
+    const actual = fields.number().validate(expected);
+    expect(actual).toBe(expected);
   });
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'number');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = fields.number({ allowTypes: [] });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(failedValidation());
+    const validator = fields.number({ allowTypes: [] });
+    const perform = () => validator.validate(value);
+    expect(perform).toThrow();
   });
 });
 
-describe('schema test', () => {
+describe('serialization test', () => {
   const defaultSettings = {
     allowTypes: [],
+    empty: false,
   };
 
   test('default options', () => {
     const schema = fields.number();
-    expect(schema.schema).toEqual(defaultSettings);
+    expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
     const schema = fields.number({ min: 3 });
-    expect(schema.schema).toEqual({ ...defaultSettings, min: 3 });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, min: { value: 3, inclusive: true } });
   });
 });
 
@@ -52,12 +48,9 @@ describe('length test', () => {
   });
 
   test('value=1 min=1 max=1 isValid=true', () => {
-    const schema = fields.number({ min: 1, max: 1 });
-    const value = 1;
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(successfulValidation(value));
+    const expected = 1;
+    const actual = fields.number({ min: 1, max: 1 }).validate(expected);
+    expect(actual).toBe(expected);
   });
 
   test.each([
@@ -75,15 +68,14 @@ describe('length test', () => {
     [2.01, false, false],
   ])('value=%s min=1 max=2 inclusive=%s valid=%s', (value, inclusive, valid) => {
     const schema = fields.number({ min: { value: 1, inclusive }, max: { value: 2, inclusive } });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+    const perform = () => schema.validate(value);
+    successOrFailure(perform, valid, value);
   });
 });
 
 describe('string conversion', () => {
   test.each([
+    ['', undefined],
     ['1', 1],
     ['+1', 1],
     ['123, 000', 123000],
@@ -106,10 +98,8 @@ describe('string conversion', () => {
     ['a', undefined],
   ])('value=%s expected=%s', (value, expected) => {
     const schema = fields.number({ allowTypes: ['string'] });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
+    const perform = () => schema.validate(value);
+    successOrFailure(perform, expected !== undefined, expected);
   });
 
   test.each([
@@ -122,10 +112,14 @@ describe('string conversion', () => {
     ['-0.12345678901234567', 4, -0.1234],
   ])('value=%s precision=%s expected=%s', (value, precision, expected) => {
     const schema = fields.number({ allowTypes: ['string'], precision });
+    const perform = () => schema.validate(value);
+    successOrFailure(perform, expected !== undefined, expected);
+  });
 
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
+  test('value= empty=true isValid=true', () => {
+    const expected = 1;
+    const actual = fields.number({ allowTypes: ['string'], empty: true }).validate(expected);
+    expect(actual).toBe(expected);
   });
 });
 
@@ -138,19 +132,17 @@ describe('precision', () => {
   test.each([
     [1.1, 2, 1.1],
     [1.12, 2, 1.12],
-    [1.123, 2, 1.123],
+    [1.123, 2, 1.12],
     [-1.1, 2, -1.1],
     [-1.12, 2, -1.12],
-    [-1.123, 2, -1.123],
+    [-1.123, 2, -1.12],
     [1, 0, 1],
     [-1, 0, -1],
     [0, 0, 0],
   ])('value=%s precision=%s expected=%s', (value, precision, expected) => {
-    const schema = fields.number({ allowTypes: ['string'], precision });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(expected !== undefined ? successfulValidation(expected) : failedValidation());
+    const schema = fields.number({ precision });
+    const perform = () => schema.validate(value);
+    successOrFailure(perform, expected !== undefined, expected);
   });
 });
 
@@ -170,9 +162,7 @@ describe('choices', () => {
 
   test.each(choicesTest)('choices=%s value=%s valid=%s', (choices, value, valid) => {
     const schema = fields.number({ choices, allowTypes: 'string' });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(valid ? successfulValidation(+value) : failedValidation());
+    const perform = () => schema.validate(value);
+    successOrFailure(perform, valid, +value);
   });
 });

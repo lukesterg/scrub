@@ -1,20 +1,43 @@
-import { arrayToCommaListString, ScrubError } from '../utilities';
-import { ValidationState } from '../validator';
+import { arrayToCommaListString, assert, ScrubError } from '../utilities';
 
-export interface Choices<T> {
-  choices: T[];
+export type AllChoiceOptions<T> = T | T[] | undefined;
+
+export interface ChoicesUserOptions<T> {
+  choices: AllChoiceOptions<T> | undefined;
 }
 
-export const generateChoices = <T>(options?: Partial<Choices<T>>) => {
-  if (!options?.choices) {
-    return () => true;
+export class Choices<T> implements ChoicesUserOptions<T> {
+  private _choices?: Set<T>;
+  private _error?: string;
+
+  public get choices(): AllChoiceOptions<T> | undefined {
+    if (!this._choices) {
+      return;
+    }
+
+    return [...this._choices];
   }
 
-  if (options.choices.length === 0) {
-    throw new ScrubError('must have at least one element in a choice');
+  public set choices(value: AllChoiceOptions<T> | undefined) {
+    if (value === undefined) {
+      this._choices = undefined;
+      return;
+    }
+
+    const arrayChoices = Array.isArray(value) ? value : [value];
+    if (arrayChoices.length === 0) {
+      throw new ScrubError('at least one value must be specified');
+    }
+
+    this._error = `value must be one of ${arrayToCommaListString(arrayChoices)}`;
+    this._choices = new Set(arrayChoices);
   }
 
-  const choices = new Set<T>(options.choices);
-  return (state: ValidationState) =>
-    state.assert(choices.has(state.value), `value must be one of ${arrayToCommaListString(options.choices!)}`);
-};
+  test(value: any) {
+    if (!this._choices) {
+      return;
+    }
+
+    assert(this._choices.has(value), this._error!);
+  }
+}
