@@ -1,5 +1,5 @@
-import { fields, validate } from '..';
-import { failedValidation, successfulValidation } from './common';
+import { fields } from '..';
+import { successOrFailure } from './common';
 
 const ipV4Tests = [
   ['', false],
@@ -58,27 +58,25 @@ export const allDomainTests = ipV4Tests.concat(ipV6Tests).concat(domainTests) as
 describe('domain verification tests', () => {
   test.each(allDomainTests)('allow=%s value=%s isValid=%s', (allow, value, isValid) => {
     const schema = fields.domain({ allow: allow as any });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(isValid ? successfulValidation(value) : failedValidation());
+    successOrFailure(schema, value, isValid, value);
   });
 });
 
 describe('schema test', () => {
   const defaultSettings = {
     allow: ['domain'],
+    allowTypes: [],
     maxLength: 255,
     empty: false,
   };
 
   test('default options', () => {
     const schema = fields.domain();
-    expect(schema.schema).toEqual(defaultSettings);
+    expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
     const schema = fields.domain({ allow: ['ip'] });
-    expect(schema.schema).toEqual({ ...defaultSettings, allow: ['ip'] });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, allow: ['ip'] });
   });
 });

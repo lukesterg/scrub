@@ -1,6 +1,6 @@
+import { fields } from '..';
+import { successOrFailure } from './common';
 import { allDomainTests } from './domain.test';
-import { fields, validate } from '..';
-import { failedValidation, successfulValidation } from './common';
 
 const domainTests = allDomainTests.map(([type, host, success]) => [type, `a@${host}`, success]);
 
@@ -27,10 +27,7 @@ const emailTests = userTests.concat(domainTests) as [any, string, boolean][];
 describe('email verification tests', () => {
   test.each(emailTests)('allow=%s value=%s isValid=%s', (allow, value, isValid) => {
     const schema = fields.email({ allow: allow as any });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(isValid ? successfulValidation(value) : failedValidation());
+    successOrFailure(schema, value, isValid, value);
   });
 });
 
@@ -38,16 +35,17 @@ describe('schema test', () => {
   const defaultSettings = {
     allow: ['domain'],
     maxLength: 320,
+    allowTypes: [],
     empty: false,
   };
 
   test('default options', () => {
     const schema = fields.email();
-    expect(schema.schema).toEqual(defaultSettings);
+    expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
     const schema = fields.email({ allow: ['ip'] });
-    expect(schema.schema).toEqual({ ...defaultSettings, allow: ['ip'] });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, allow: ['ip'] });
   });
 });

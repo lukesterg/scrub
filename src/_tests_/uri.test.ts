@@ -1,6 +1,6 @@
-import { UriOptions } from '../types';
-import { fields, validate } from '..';
-import { failedValidation, successfulValidation } from './common';
+import { fields } from '..';
+import { UriOptions } from '../fields/uri';
+import { successOrFailure } from './common';
 
 describe('uri tests', () => {
   // prettier-ignore
@@ -20,15 +20,11 @@ describe('uri tests', () => {
     [{ allowedProtocols: ['https']}, 'http://www.domain.com/path?query=dfd#target', false],
     [{ allowedProtocols: ['https']}, 'https://www.domain.com/path?query=dfd#target', true],
 
-
   ];
 
-  test.each(passwordTests)('options=%s value=%s isValid=%s', (options, value, success) => {
+  test.each(passwordTests)('options=%s value=%s isValid=%s', (options, value, isValid) => {
     const schema = fields.uri(options);
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(success ? successfulValidation(value) : failedValidation(1));
+    successOrFailure(schema, value, isValid, value);
   });
 });
 
@@ -36,15 +32,16 @@ describe('schema test', () => {
   const defaultSettings: UriOptions = {
     empty: false,
     allow: ['all'],
+    allowTypes: [],
   };
 
   test('default options', () => {
     const schema = fields.uri();
-    expect(schema.schema).toEqual(defaultSettings);
+    expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
     const schema = fields.uri({ allowedProtocols: ['http'] });
-    expect(schema.schema).toEqual({ ...defaultSettings, allowedProtocols: ['http'] });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, allowedProtocols: ['http'] });
   });
 });

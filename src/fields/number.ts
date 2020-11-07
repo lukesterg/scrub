@@ -1,33 +1,34 @@
-import { ScrubField, NumberOptions, TypeOfTypes } from '../types';
-import { ValidationCallback, ValidationState } from '../validator';
-import { validateRange, expandRangeBoundary, sanityTestInput, RangeMinMax } from '../validators/range';
-import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
+import { assert, copyFilteredObject, Empty, NoValue, ScrubError, ValidationField } from '../common';
+import { AllowTypeConverter, ConversionCallback, AllowOptions, AllowTypesUserOptions } from '../validators/allow';
+import { Choices, ChoicesUserOptions, AllChoiceOptions } from '../validators/choice';
+import { MinMaxRangeUserOptions, Range, RangeLimitType } from '../validators/range';
 import { validateType } from '../validators/validateType';
-import { ScrubError } from '../utilities';
-import { generateChoices } from '../validators/choice';
 
-const defaultNumberOptions: NumberOptions = {
-  allowTypes: [],
-};
+type NumberAllowOptions = 'string';
 
-const buildRange = (schema: NumberOptions): RangeMinMax => ({
-  ...(schema.min ? expandRangeBoundary(schema.min, true, true) : {}),
-  ...(schema.max ? expandRangeBoundary(schema.max, true, false) : {}),
-});
+export interface NumberOptions<T = number>
+  extends Empty,
+    AllowTypesUserOptions<NumberAllowOptions>,
+    MinMaxRangeUserOptions,
+    ChoicesUserOptions<T> {
+  precision?: number;
+}
 
-const conversion: Conversions<NumberOptions> = {
-  string: (state, options) => {
-    let value: string = state.value;
+const conversions: ConversionCallback<NumberAllowOptions> = {
+  string: function (this: NumberValidator, value: any) {
+    if (value === '') {
+      assert(this.empty, 'Please enter a value');
+      return NoValue;
+    }
+
     // remove punctuation (ie: 123, 000).
     value = value.replace(/[^0-9.-]+/g, '');
     const match = (value as string).match(/^(-?\d*)(\.(\d*))?$/);
-    if (!state.assert(value === '.' || match !== null, 'Please enter a valid number')) {
-      return;
-    }
+    assert(value === '.' || match !== null, 'Please enter a valid number');
 
     let [_, whole, _2, fractional] = match;
-    if (fractional && options.precision !== undefined) {
-      fractional = fractional.slice(0, options.precision);
+    if (fractional && this.precision !== undefined) {
+      fractional = fractional.slice(0, this.precision);
     }
 
     let newValue = whole || 0;
@@ -37,45 +38,93 @@ const conversion: Conversions<NumberOptions> = {
 
     const converted = +newValue;
 
-    if (
-      state.assert(
-        newValue === converted.toString(),
-        'String could not be converted to a number, it is either too large or has too many decimal places'
-      )
-    ) {
-      state.setValue(converted);
-    }
+    assert(
+      newValue === converted.toString(),
+      'String could not be converted to a number, it is either too large or has too many decimal places'
+    );
+    return converted;
   },
 };
+const serializeKeys = new Set<keyof NumberOptions>(['allowTypes', 'choices', 'empty', 'max', 'min', 'precision']);
 
-const setNumberPrecision = (value: number, precision: number) => +value.toFixed(precision);
+class NumberValidator<T = number> extends ValidationField<T, Partial<NumberOptions<T>>> implements NumberOptions<T> {
+  readonly serializeKeys = serializeKeys;
 
-export const number = (options?: Partial<NumberOptions>): ScrubField<number, NumberOptions> => {
-  const schema = { ...defaultNumberOptions, ...options };
-  const range = buildRange(schema);
-  const choices = generateChoices(options);
+  protected _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
+  protected _allowedTypes = new AllowTypeConverter<NumberAllowOptions>({ default: [] });
+  protected _choices = new Choices<T>();
+  protected _precision?: number;
 
-  if (schema.precision && schema.precision < 0) {
-    throw new ScrubError('precision must be a positive value');
+  empty = false;
+
+  get min(): RangeLimitType {
+    return this._range.min;
+  }
+  set min(value: RangeLimitType) {
+    this._range.min = value;
   }
 
-  sanityTestInput(range);
-  const performConversion = allowedTypeConverter(schema.allowTypes, 'number', conversion);
+  get max(): RangeLimitType {
+    return this._range.max;
+  }
 
-  const validate: ValidationCallback = (state: ValidationState) => {
-    if (!performConversion(state, schema)) return;
-    if (!validateType(state, 'number')) return;
-    if (!choices(state)) return;
+  set max(value: RangeLimitType) {
+    this._range.max = value;
+  }
 
-    if (schema.precision !== undefined) {
-      setNumberPrecision(state.value, schema.precision);
+  get precision(): number | undefined {
+    return this._precision;
+  }
+  set precision(value: number | undefined) {
+    if (value !== undefined && value < 0) {
+      throw new ScrubError('precision must be positive');
+    }
+    this._precision = value;
+  }
+
+  get allowTypes(): AllowOptions<NumberAllowOptions> {
+    return this._allowedTypes.allow;
+  }
+
+  set allowTypes(value: AllowOptions<NumberAllowOptions>) {
+    this._allowedTypes.allow = value;
+  }
+
+  get choices(): AllChoiceOptions<T> | undefined {
+    return this._choices.choices;
+  }
+
+  set choices(value: AllChoiceOptions<T> | undefined) {
+    this._choices.choices = value;
+  }
+
+  protected _validate(value: any): T | undefined {
+    value = this._allowedTypes.convert(value, conversions, this);
+    if (value === undefined && this.empty) return;
+    validateType(value, 'number');
+    this._choices.test(value);
+
+    if (this._precision !== undefined) {
+      value = +value.toFixed(this._precision);
     }
 
-    validateRange(state, {
-      ...range,
-      value: state.value,
-    });
-  };
+    this._range.test(value);
+    return value;
+  }
+}
 
-  return { validate, schema };
-};
+export function number(): NumberValidator<number>;
+export function number(
+  options?: Partial<NumberOptions<number | undefined>> & { empty: true }
+): NumberValidator<number | undefined>;
+export function number(options?: Partial<NumberOptions<number | undefined>>): NumberValidator<number>;
+export function number(
+  options?: Partial<NumberOptions<number | undefined>>
+): NumberValidator<number> | NumberValidator<number | undefined> {
+  const number = new NumberValidator();
+  if (options) {
+    copyFilteredObject(number, options, number.serializeKeys);
+  }
+
+  return number;
+}

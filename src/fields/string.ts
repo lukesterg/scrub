@@ -1,48 +1,148 @@
-import { Merge, ScrubField, StringOptions } from '../types';
-import { ValidationCallback, ValidationState } from '../validator';
-import { allowedTypeConverter, Conversions } from '../validators/allowedTypeConverter';
-import { generateChoices } from '../validators/choice';
-import { RangeMinMax, sanityTestInput, validateRange } from '../validators/range';
+import { assert, copyFilteredObject, Empty, ValidationField, countIfTrue, ScrubError } from '../common';
+import { AllowTypeConverter, ConversionCallback, AllowOptions, AllowTypesUserOptions } from '../validators/allow';
+import { Choices, ChoicesUserOptions, AllChoiceOptions } from '../validators/choice';
+import { Range, MinMaxLengthRangeUserOptions, RangeLimitInclusiveOption } from '../validators/range';
 import { validateType } from '../validators/validateType';
 
-const defaultStringOptions: StringOptions = {
-  empty: false,
-  allowTypes: [],
+export type StringAllowOptions = 'number' | 'boolean' | 'bigint';
+
+export type TransformStringOptions = 'upperCase' | 'lowerCase' | 'trimStart' | 'trimEnd' | 'trim';
+export type TransformStringType = TransformStringOptions | TransformStringOptions[];
+
+export interface StringOptions<T = string>
+  extends Empty,
+    AllowTypesUserOptions<StringAllowOptions>,
+    MinMaxLengthRangeUserOptions,
+    Partial<ChoicesUserOptions<T>> {
+  transformString?: TransformStringType;
+}
+
+const conversions: ConversionCallback<StringAllowOptions> = {
+  number: function (this: StringValidator, value: any) {
+    return value.toString();
+  },
+  boolean: function (this: StringValidator, value: any) {
+    return value.toString();
+  },
+  bigint: function (this: StringValidator, value: any) {
+    return value.toString();
+  },
 };
 
-const buildRange = (schema: StringOptions): RangeMinMax => ({
-  minInclusive: true,
-  maxInclusive: true,
-  ...(schema.minLength ? { min: schema.minLength } : {}),
-  ...(schema.maxLength ? { max: schema.maxLength } : {}),
-});
+export const serializeKeys = new Set<keyof StringOptions>([
+  'allowTypes',
+  'choices',
+  'empty',
+  'maxLength',
+  'minLength',
+  'transformString',
+]);
 
-const conversion: Conversions<StringOptions> = {
-  number: (state) => state.setValue(state.value.toString()),
-  boolean: (state) => state.setValue(state.value.toString()),
-  bigint: (state) => state.setValue(state.value.toString()),
-};
+export class StringValidator<T = string>
+  extends ValidationField<T, Partial<StringOptions<T>>>
+  implements StringOptions<T> {
+  readonly serializeKeys = serializeKeys;
 
-export const string = <T extends Partial<StringOptions>>(options?: T): ScrubField<string, Merge<T, StringOptions>> => {
-  const schema = { ...defaultStringOptions, ...options } as Merge<T, StringOptions>;
-  const range = buildRange(schema);
-  const choices = generateChoices(options);
+  protected _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
+  protected _allowedTypes = new AllowTypeConverter<StringAllowOptions>({ default: [] });
+  protected _choices = new Choices<T>();
+  protected _transformString?: Set<TransformStringOptions>;
 
-  sanityTestInput(range);
-  const performConversion = allowedTypeConverter(schema.allowTypes, 'string', conversion);
+  empty = false;
 
-  const validate: ValidationCallback = (state: ValidationState) => {
-    if (!performConversion(state, schema)) return;
-    if (!validateType(state, 'string')) return;
-    if (!choices(state)) return;
+  get transformString(): TransformStringType | undefined {
+    return this._transformString ? [...this._transformString] : undefined;
+  }
 
-    state.assert(schema.empty || state.value !== '', 'Please enter a value');
-    validateRange(state, {
-      ...range,
-      value: state.value.length,
-      units: 'characters',
-    });
-  };
+  set transformString(value: TransformStringType | undefined) {
+    if (value === undefined) {
+      this._transformString = value;
+      return;
+    }
 
-  return { validate, schema };
-};
+    const newTransformString = new Set(Array.isArray(value) ? value : [value]);
+
+    const numberOfCaseChangingOperations = countIfTrue(
+      newTransformString.has('lowerCase'),
+      newTransformString.has('upperCase')
+    );
+    if (numberOfCaseChangingOperations > 1) {
+      throw new ScrubError('Up to one case changing operation can be set');
+    }
+
+    this._transformString = newTransformString;
+  }
+
+  get minLength(): number {
+    return (this._range.min as RangeLimitInclusiveOption)?.value;
+  }
+  set minLength(value: number) {
+    this._range.min = value;
+  }
+
+  get maxLength(): number {
+    return (this._range.max as RangeLimitInclusiveOption)?.value;
+  }
+
+  set maxLength(value: number) {
+    this._range.max = value;
+  }
+
+  get allowTypes(): AllowOptions<StringAllowOptions> {
+    return this._allowedTypes.allow;
+  }
+
+  set allowTypes(value: AllowOptions<StringAllowOptions>) {
+    this._allowedTypes.allow = value;
+  }
+
+  get choices(): AllChoiceOptions<T> | undefined {
+    return this._choices.choices;
+  }
+
+  set choices(value: AllChoiceOptions<T> | undefined) {
+    this._choices.choices = value;
+  }
+
+  private _performTransformString(value: string) {
+    if (this._transformString === undefined) {
+      return value;
+    }
+
+    if (this._transformString.has('trim') || this._transformString.has('trimStart')) {
+      value = value.trimStart();
+    }
+
+    if (this._transformString.has('trim') || this._transformString.has('trimEnd')) {
+      value = value.trimEnd();
+    }
+
+    if (this._transformString.has('upperCase')) {
+      value = value.toUpperCase();
+    } else if (this._transformString.has('lowerCase')) {
+      value = value.toLowerCase();
+    }
+
+    return value;
+  }
+
+  protected _validate(value: any): T | undefined {
+    value = this._allowedTypes.convert(value, conversions, this);
+    validateType(value, 'string');
+    value = this._performTransformString(value);
+
+    this._choices.test(value);
+    assert(this.empty || value !== '', 'Please enter a value');
+    this._range.test(value.length);
+    return value;
+  }
+}
+
+export function string(options?: Partial<StringOptions<string | undefined>>): StringValidator<string> {
+  const string = new StringValidator();
+  if (options) {
+    copyFilteredObject(string, options, string.serializeKeys);
+  }
+
+  return string;
+}

@@ -1,81 +1,149 @@
 import {
-  ScrubField,
-  ValidationCallback,
-  ValidationState,
-  ObjectOptions,
-  ObjectOfUserScrubFields,
-  ObjectSchema,
-  ObjectSchemaType,
-} from '../types';
-import { fromEntries } from '../utilities';
-import { ScrubFieldBase, validate } from '../validator';
+  arrayToCommaListString,
+  copyFilteredObject,
+  ErrorKeys,
+  GetType,
+  NoValue,
+  ObjectErrorType,
+  ObjectValidatorError,
+  Undefined,
+  ValidationField,
+  ValidatorError,
+} from '../common';
 import { validateType } from '../validators/validateType';
 
-const isScrubField = (val: any) => val?.validate && typeof val.validate === 'function';
+export type ValidatedType<T> = { [key in keyof T]: GetType<T[key]> };
+export type ObjectAdditionalFieldType = 'strip' | 'error' | 'merge';
 
-type ObjectOfScrubFields<T> = { [key in keyof T]: ScrubFieldBase };
+export interface ObjectOptions<T> extends Partial<Undefined> {
+  fields: T;
+  additionalFields?: ObjectAdditionalFieldType;
+}
 
-const wrapInnerObjectFieldsWithValidator = <T extends ObjectOfUserScrubFields>(
-  options: ObjectOptions<T>
-): ObjectOfScrubFields<T['fields']> => {
-  const entries = Object.entries(options.fields);
-  const objectEntries = entries.filter(([_, schema]) => !isScrubField(schema));
-  if (objectEntries.length === 0) {
-    return options.fields as any;
+class ObjectValidationState<T> {
+  private _errors: ObjectErrorType<T> = {};
+  private _cleanedFields: Partial<ValidatedType<T>> = {};
+
+  get errors() {
+    return this._errors;
   }
 
-  objectEntries.forEach((entry) => {
-    entry[1] = object({ ...options, fields: entry[1] as any });
-  });
+  get hasError() {
+    return Object.keys(this._errors).length !== 0;
+  }
 
-  return fromEntries(objectEntries) as ObjectOfScrubFields<T['fields']>;
-};
+  get cleanedFields() {
+    return this._cleanedFields;
+  }
 
-export const object = <T extends ObjectOfUserScrubFields>(
+  addCleanedField(value: any, field: keyof T) {
+    if (value === NoValue) {
+      return;
+    }
+
+    this._cleanedFields[field] = value;
+  }
+
+  addError(message: any, field: ErrorKeys<T> = '_') {
+    this._errors[field] = message;
+  }
+}
+
+const serializeKeys = new Set(['fields', 'onUnknownField', 'additionalFields']);
+
+export type ValidatorType = { [key: string]: ValidationField<unknown, unknown> };
+
+class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedType<Fields>>
+  extends ValidationField<ValidatedType<Fields> | CanBeUndefined, Partial<ObjectOptions<Fields>>>
+  implements ObjectOptions<Fields> {
+  serializeKeys = serializeKeys;
+  undefined: boolean = false;
+  fields: Fields;
+  additionalFields: ObjectAdditionalFieldType = 'strip';
+
+  constructor(fields: Fields) {
+    super();
+    this.fields = fields;
+  }
+
+  private _getField(name: string) {
+    const field = (this.fields as any)[name];
+    if (field.constructor !== Object) {
+      return field;
+    }
+
+    const clone = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as ObjectValidator<
+      Fields,
+      CanBeUndefined
+    >;
+    clone.fields = field;
+    return clone;
+  }
+
+  serialize() {
+    const result = super.serialize();
+    result['fields'] = Object.keys(this.fields).reduce((last, key) => {
+      last[key] = this._getField(key).serialize();
+      return last;
+    }, {} as any);
+    return result;
+  }
+
+  private _validateField(objectValue: any, field: string) {
+    if (!(field in objectValue)) {
+      throw new ValidatorError(`Please add the field ${field}`);
+    }
+
+    return this._getField(field).validate(objectValue[field]);
+  }
+
+  protected _validate(value: any): ValidatedType<Fields> | undefined {
+    if (value === undefined && this.undefined) {
+      return value;
+    }
+
+    validateType(value, 'object');
+
+    const state = new ObjectValidationState<Fields>();
+    const keysNotInSchema = new Set(Object.keys(value));
+
+    for (const field in this.fields) {
+      keysNotInSchema.delete(field);
+
+      try {
+        const cleanedValue = this._validateField(value, field);
+        state.addCleanedField(cleanedValue, field);
+      } catch (e) {
+        if (!(e instanceof ValidatorError)) {
+          throw e;
+        }
+
+        state.addError(e instanceof ObjectValidatorError ? e.objectError : e.message, field);
+      }
+    }
+
+    if (this.additionalFields === 'error') {
+      keysNotInSchema.forEach((field) => state.addError('Please remove field', field));
+    } else if (this.additionalFields === 'merge') {
+      keysNotInSchema.forEach((key) => state.addCleanedField(value[key], key));
+    }
+
+    if (state.hasError) {
+      throw new ObjectValidatorError(state.errors);
+    }
+
+    return state.cleanedFields as ValidatedType<Fields>;
+  }
+}
+
+export function object<T extends ValidatorType>(
+  options: ObjectOptions<T> & { undefined: true }
+): ObjectValidator<T, undefined>;
+export function object<T extends ValidatorType>(options: ObjectOptions<T>): ObjectValidator<T>;
+export function object<T extends ValidatorType>(
   options: ObjectOptions<T>
-): ScrubField<T, ObjectSchema<T>> => {
-  const fields = wrapInnerObjectFieldsWithValidator(options);
-  const schema: ObjectSchema<T> = {
-    additionalFields: options.additionalFields || 'strip',
-    fields: fromEntries(
-      Object.entries(options.fields).map(([key, value]) => [key, (value as any).schema])
-    ) as ObjectSchemaType<T>,
-  };
-
-  const validateObject: ValidationCallback = (state: ValidationState<ObjectOptions<T>>) => {
-    if (!validateType(state, 'object')) return;
-
-    let finalValue: any = options.additionalFields === 'merge' ? state.value : {};
-    const errors: any = {};
-
-    for (const field in fields) {
-      if (!(field in state.value)) {
-        errors[field] = [`Please add the field ${field}`];
-        finalValue = undefined;
-        continue;
-      }
-
-      const validationResult = validate({ schema: fields[field], value: state.value[field] });
-      if (!validationResult.success) {
-        errors[field] = validationResult.errors;
-        finalValue = undefined;
-        continue;
-      }
-
-      if (finalValue) {
-        finalValue[field] = validationResult.value;
-      }
-    }
-
-    if (options.additionalFields === 'error') {
-      Object.keys(state.value)
-        .filter((field) => !(fields as any)[field])
-        .forEach((field) => (errors[field] = ['Please remove field']));
-    }
-
-    state.setValue(finalValue);
-    state.setObjectErrors(errors);
-  };
-
-  return { validate: validateObject, schema };
-};
+): ObjectValidator<T, undefined> | ObjectValidator<T> {
+  const object = new ObjectValidator(options.fields);
+  copyFilteredObject(object, options, object.serializeKeys);
+  return object;
+}

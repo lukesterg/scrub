@@ -1,26 +1,41 @@
-import { UriOptions, ScrubField } from '../types';
-import { ValidationCallback, ValidationState } from '../validator';
-import { string } from './string';
-import { validUri } from '../validators/uri';
+import { assert, copyFilteredObject } from '../common';
+import { DomainOptions, DomainValidatorOptionsBase, serializeKeys as domainSerializeKeys } from './domain';
+import { validateUri } from '../validators/uri';
 
-const defaultUriOptions: UriOptions = {
-  allow: ['all'],
-  empty: false,
-};
+export interface UriOptions<T = string> extends DomainOptions<T> {
+  allowedProtocols?: string[];
+}
 
-export const uri = (options?: Partial<UriOptions>): ScrubField<string, UriOptions> => {
-  const schema = { ...defaultUriOptions, ...options };
+export const serializeKeys = new Set<keyof UriOptions>([...domainSerializeKeys, 'allowedProtocols']);
 
-  const { validate: stringValidate } = string(schema);
+export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> implements UriOptions<T> {
+  allowedProtocols?: string[];
 
-  const validate: ValidationCallback = (state: ValidationState) => {
-    stringValidate(state);
-    if (typeof state.value !== 'string') {
-      return;
+  constructor() {
+    super();
+    (this as any).serializeKeys = serializeKeys;
+    this.allow = 'all';
+  }
+
+  protected _validate(value: any): T | undefined {
+    value = super._validate(value);
+    if (!value || value === '') {
+      return value;
     }
 
-    state.assert(validUri(state.value, schema), 'Please enter a valid uri');
-  };
+    assert(
+      validateUri(value, { allow: this._allow.allow, allowedProtocols: this.allowedProtocols }),
+      'Please enter a valid email'
+    );
+    return value;
+  }
+}
 
-  return { validate, schema };
-};
+export function uri(options?: Partial<UriOptions<string | undefined>>): UriValidator<string> {
+  const uri = new UriValidator();
+  if (options) {
+    copyFilteredObject(uri, options, uri.serializeKeys);
+  }
+
+  return uri;
+}

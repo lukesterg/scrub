@@ -1,4 +1,2 @@
-export * as types from './types';
 export * as fields from './fields';
-export { validate } from './validator';
-export { ScrubError } from './utilities';
+export { ScrubError, ValidatorError, ObjectValidatorError, GetType } from './common';

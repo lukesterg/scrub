@@ -1,27 +1,23 @@
-import { fields, validate } from '..';
-import { allTypes, failedValidation, successfulValidation } from './common';
+import { fields } from '..';
+import { StringOptions } from '../fields/string';
+import { allTypes, successOrFailure } from './common';
 
 describe('type tests', () => {
   test('string is valid', () => {
-    const schema = fields.string();
-    const value = 'a';
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(successfulValidation(value));
+    const expected = 'a';
+    const actual = fields.string().validate(expected);
+    expect(actual).toBe(expected);
   });
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'string');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = fields.string({ allowTypes: [] });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(failedValidation());
+    const validator = fields.string();
+    const perform = () => validator.validate(value);
+    expect(perform).toThrow();
   });
 });
 
-describe('required tests', () => {
+describe('empty tests', () => {
   const requiredTests: [string, boolean, boolean][] = [
     ['', true, true],
     ['', false, false],
@@ -30,14 +26,11 @@ describe('required tests', () => {
   ];
   test.each(requiredTests)('value=%s empty=%s valid=%s', (value, empty, valid) => {
     const schema = fields.string({ empty });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+    successOrFailure(schema, value, valid, value);
   });
 });
 
-describe('schema test', () => {
+describe('serialization test', () => {
   const defaultSettings = {
     empty: false,
     allowTypes: [],
@@ -45,19 +38,19 @@ describe('schema test', () => {
 
   test('default options', () => {
     const schema = fields.string();
-    expect(schema.schema).toEqual(defaultSettings);
+    expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
     const schema = fields.string({ empty: true });
-    expect(schema.schema).toEqual({ ...defaultSettings, empty: true });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, empty: true });
   });
 });
 
 describe('length test', () => {
   test('max length cannot be less than min length', () => {
-    const action = () => fields.string({ minLength: 2, maxLength: 1 });
-    expect(action).toThrow();
+    const perform = () => fields.string({ minLength: 2, maxLength: 1 });
+    expect(perform).toThrow();
   });
 
   test.each([
@@ -68,10 +61,7 @@ describe('length test', () => {
     ['abcd', false],
   ])('value=%s min=1 max=3 valid=%s', (value, valid) => {
     const schema = fields.string({ minLength: 1, maxLength: 3, empty: true });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+    successOrFailure(schema, value, valid, value);
   });
 
   test.each([
@@ -80,10 +70,7 @@ describe('length test', () => {
     ['ab', false],
   ])('value=%s min=1 max=1 valid=%s', (value, valid) => {
     const schema = fields.string({ minLength: 1, maxLength: 1, empty: true });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(valid ? successfulValidation(value) : failedValidation());
+    successOrFailure(schema, value, valid, value);
   });
 });
 
@@ -99,10 +86,8 @@ describe('type conversion', () => {
     [false, 'false'],
   ])('value=%s expected=%s', (value, expected) => {
     const schema = fields.string({ allowTypes: 'all' });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(successfulValidation(expected));
+    const actual = schema.validate(value);
+    expect(actual).toBe(expected);
   });
 });
 
@@ -122,9 +107,27 @@ describe('choices', () => {
 
   test.each(choicesTest)('choices=%s value=%s valid=%s', (choices, value, valid) => {
     const schema = fields.string({ choices, allowTypes: 'all' });
+    successOrFailure(schema, value, valid, value.toString());
+  });
+});
 
-    const validationResult = validate({ schema, value });
+describe('transformations', () => {
+  const tests: [string, Partial<StringOptions>, string][] = [
+    [' aB ', {}, ' aB '],
+    [' aB ', { transformString: 'trimStart' }, 'aB '],
+    [' aB ', { transformString: 'trimEnd' }, ' aB'],
+    [' aB ', { transformString: 'trim' }, 'aB'],
+    [' aB ', { transformString: 'upperCase' }, ' AB '],
+    [' aB ', { transformString: 'lowerCase' }, ' ab '],
+    [' aB ', { transformString: ['trim', 'lowerCase'] }, 'ab'],
+  ];
+  test.each(tests)('value=%s expected=%s', (value, options, expected) => {
+    const schema = fields.string(options);
+    successOrFailure(schema, value, true, expected);
+  });
 
-    expect(validationResult).toEqual(valid ? successfulValidation(value.toString()) : failedValidation());
+  test('only one case transformation is allowed', () => {
+    const perform = () => fields.string({ transformString: ['upperCase', 'lowerCase'] });
+    expect(perform).toThrow();
   });
 });

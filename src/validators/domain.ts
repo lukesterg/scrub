@@ -1,4 +1,4 @@
-import { Allow, generateShouldAllow } from './allow';
+import { Allow, AllowOptions } from './allow';
 
 // See https://tools.ietf.org/html/rfc1035 (section 2.3.4)
 export const maximumDomainLength = 255;
@@ -26,20 +26,21 @@ const validateIpv6 = (value: string) =>
     value
   );
 
-export interface DomainValidationOptions extends Allow<'ip' | 'ipv4' | 'ipv6' | 'domain'> {}
+export type DomainTypes = 'domain' | 'ipv4' | 'ipv6' | 'ip';
+export type DomainValidationOptions = AllowOptions<DomainTypes>;
 
 export const validateDomain = (domain: string, options: DomainValidationOptions) => {
-  const shouldAllow = generateShouldAllow(options);
+  const allow = new Allow<DomainTypes>({ default: options });
 
-  if ((shouldAllow('ip') || shouldAllow('ipv4')) && validateIpv4(domain)) {
+  if ((allow.test('ip') || allow.test('ipv4')) && validateIpv4(domain)) {
     return true;
   }
 
-  if ((shouldAllow('ip') || shouldAllow('ipv6')) && validateIpv6(domain)) {
+  if ((allow.test('ip') || allow.test('ipv6')) && validateIpv6(domain)) {
     return true;
   }
 
-  if (shouldAllow('domain') && validateHostName(domain)) {
+  if (allow.test('domain') && validateHostName(domain)) {
     return true;
   }
 

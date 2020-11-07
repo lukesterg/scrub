@@ -1,27 +1,31 @@
-import { DomainOptions, ScrubField, UserDomainOptions } from '../types';
-import { ValidationCallback, ValidationState } from '../validator';
+import { assert, copyFilteredObject } from '../common';
 import { maximumEmailLength, validateEmail } from '../validators/email';
-import { string } from './string';
-import { UserEmailOptions, EmailOptions } from '../types';
+import { RangeLimitInclusiveOption } from '../validators/range';
+import { DomainOptions, DomainValidator, DomainValidatorOptionsBase } from './domain';
 
-const defaultEmailOptions: EmailOptions = {
-  maxLength: maximumEmailLength,
-  empty: false,
-  allow: ['domain'],
-};
+export type EmailOptions<T = string> = DomainOptions<T>;
 
-export const email = (options?: Partial<UserEmailOptions>): ScrubField<string, EmailOptions> => {
-  const schema = { ...defaultEmailOptions, ...options };
-  const { validate: stringValidate } = string(options);
+export class EmailValidator<T = string> extends DomainValidatorOptionsBase<T> implements EmailOptions<T> {
+  get maxLength(): number {
+    return (this._range.max as RangeLimitInclusiveOption)?.value || maximumEmailLength;
+  }
 
-  const validate: ValidationCallback = (state: ValidationState) => {
-    stringValidate(state);
-    if (typeof state.value !== 'string' || state.value === '') {
-      return;
+  protected _validate(value: any): T | undefined {
+    value = super._validate(value);
+    if (!value || value === '') {
+      return value;
     }
 
-    state.assert(validateEmail(state.value, schema), 'Please enter a valid email');
-  };
+    assert(validateEmail(value, this._allow.allow), 'Please enter a valid email');
+    return value;
+  }
+}
 
-  return { validate, schema };
-};
+export function email(options?: Partial<EmailOptions<string | undefined>>): EmailValidator<string> {
+  const email = new EmailValidator();
+  if (options) {
+    copyFilteredObject(email, options, email.serializeKeys);
+  }
+
+  return email;
+}

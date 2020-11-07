@@ -1,42 +1,19 @@
-import { fields, validate } from '..';
-import { ObjectAdditionalFieldType } from '../types';
-import { allTypes, failedValidation as failedFieldValidation } from './common';
-
-const successfulValidation = (value: any) => ({
-  success: true,
-  errors: {},
-  value,
-});
-
-const failedValidation = (errors: string[]) => ({
-  success: false,
-  errors: errors.reduce((previous, current) => ({ ...previous, [current]: [expect.any(String)] }), {}),
-  value: undefined,
-});
-
-const failedValidationRecursive = (errors: any) => ({
-  success: false,
-  errors: errors,
-  value: undefined,
-});
+import { fields } from '..';
+import { allTypes, successOrFailure } from './common';
+import { ObjectAdditionalFieldType } from '../fields/object';
 
 describe('type tests', () => {
   test('object is valid', () => {
-    const schema = fields.object({ fields: {} });
-    const value = {};
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(successfulValidation(value));
+    const expected = {};
+    const actual = fields.object({ fields: {} }).validate(expected);
+    expect(actual).toEqual(expected);
   });
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'object');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const schema = fields.object({ fields: {} });
-
-    const validationResult = validate({ schema, value });
-
-    expect(validationResult).toEqual(failedFieldValidation());
+    const validator = fields.object({ fields: {} });
+    const perform = () => validator.validate(value);
+    expect(perform).toThrow();
   });
 });
 
@@ -53,10 +30,7 @@ describe('fields', () => {
     'input=%s schema=%s additionalField=%s expected=%s is valid',
     (input, objectSchema, additionalFields, expected) => {
       const schema = fields.object({ fields: objectSchema, additionalFields });
-
-      const validationResult = validate({ schema, value: input });
-
-      expect(validationResult).toEqual(successfulValidation(expected));
+      successOrFailure(schema, input, true, expected);
     }
   );
 
@@ -72,10 +46,7 @@ describe('fields', () => {
     'input=%s schema=%s additionalFields=%s errorField=%s is invalid',
     (input, objectSchema, additionalFields, errorFields) => {
       const schema = fields.object({ fields: objectSchema, additionalFields });
-
-      const validationResult = validate({ schema, value: input });
-
-      expect(validationResult).toEqual(failedValidation(errorFields));
+      successOrFailure(schema, input, false, undefined, errorFields);
     }
   );
 });
@@ -92,31 +63,25 @@ describe('recursion', () => {
     'input=%s schema=%s additionalField=%s expected=%s',
     (input, objectSchema, additionalFields, expected) => {
       const schema = fields.object({ fields: objectSchema, additionalFields });
-
-      const validationResult = validate({ schema, value: input });
-
-      expect(validationResult).toEqual(successfulValidation(expected));
+      successOrFailure(schema, input, true, expected);
     }
   );
 
   const invalidTests: [any, any, ObjectAdditionalFieldType, any][] = [
-    [{ a: {} }, { a: { b: fields.string() } }, 'strip', { a: { b: [expect.any(String)] } }],
+    [{ a: {} }, { a: { b: fields.string() } }, 'strip', { a: { b: expect.any(String) } }],
     [
       { a: { c: {} } },
       { a: { b: fields.string(), c: { d: fields.string() } } },
       'strip',
-      { a: { c: { d: [expect.any(String)] } } },
+      { a: { b: expect.any(String), c: { d: expect.any(String) } } },
     ],
-    [{ a: { b: 'a' } }, { a: {} }, 'error', { a: { b: [expect.any(String)] } }],
+    [{ a: { b: 'a' } }, { a: {} }, 'error', { a: { b: expect.any(String) } }],
   ];
   test.each(invalidTests)(
     'input=%s schema=%s additionalFields=%s errorField=%s',
     (input, objectSchema, additionalFields, errorFields) => {
       const schema = fields.object({ fields: objectSchema, additionalFields });
-
-      const validationResult = validate({ schema, value: input });
-
-      expect(validationResult).toEqual(failedValidationRecursive(errorFields));
+      successOrFailure(schema, input, false, undefined, errorFields);
     }
   );
 });
@@ -129,23 +94,23 @@ describe('schema test', () => {
 
   test('default options', () => {
     const schema = fields.object({ fields: {} });
-    expect(schema.schema).toEqual(defaultSettings);
+    expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
     const schema = fields.object({ fields: {}, additionalFields: 'error' });
-    expect(schema.schema).toEqual({ ...defaultSettings, additionalFields: 'error' });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, additionalFields: 'error' });
   });
 
   test('inner fields schemas are exposed', () => {
     const schema = fields.object({ fields: { a: fields.object({ fields: {} }) } });
-    expect(schema.schema).toEqual({ ...defaultSettings, fields: { a: defaultSettings } });
+    expect(schema.serialize()).toEqual({ ...defaultSettings, fields: { a: defaultSettings } });
   });
 
   test('nested object schemas are exposed', () => {
     const schema = fields.object({ fields: { a: fields.object({ fields: { b: fields.object({ fields: {} }) } }) } });
 
-    expect(schema.schema).toEqual({
+    expect(schema.serialize()).toEqual({
       ...defaultSettings,
       fields: { a: { ...defaultSettings, fields: { b: defaultSettings } } },
     });

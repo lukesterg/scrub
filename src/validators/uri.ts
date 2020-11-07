@@ -1,10 +1,11 @@
 import { validateDomain, DomainValidationOptions } from '../validators/domain';
 
-export interface UriValidationOptions extends DomainValidationOptions {
+export interface UriValidationOptions {
   allowedProtocols?: string[];
+  allow: DomainValidationOptions;
 }
 
-export const validUri = (uri: string, options: UriValidationOptions) => {
+export const validateUri = (uri: string, options: UriValidationOptions) => {
   let parsed: URL;
 
   try {
@@ -20,7 +21,7 @@ export const validUri = (uri: string, options: UriValidationOptions) => {
     }
   }
 
-  if (!validateDomain(parsed.hostname, options)) {
+  if (!validateDomain(parsed.hostname, options.allow)) {
     return false;
   }
 
