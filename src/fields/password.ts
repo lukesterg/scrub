@@ -1,56 +1,78 @@
-// import { PasswordOptions, ScrubField } from '../types';
-// import { ValidationCallback, ValidationState } from '../validator';
-// import { string } from './string';
+import { Allow } from '../validators/allow';
+import { RangeLimitInclusiveOption } from '../validators/range';
+import { DomainValidationOptions, DomainTypes, maximumDomainLength, validateDomain } from '../validators/domain';
+import { StringValidator, StringOptions, serializeKeys as stringSerializeKeys } from './string';
+import { assert, copyFilteredObject } from '../common';
 
-// const defaultPasswordOptions: PasswordOptions = {
-//   empty: false,
-//   requireLowerCase: false,
-//   requireNumber: false,
-//   requireSymbol: false,
-//   requireUpperCase: false,
-//   allowTypes: [],
-// };
+export interface PasswordOptions<T = string> extends StringOptions<T> {
+  requireLowerCase: boolean;
+  requireNumber: boolean;
+  requireSymbol: boolean;
+  requireUpperCase: boolean;
+  ignoreRequirementsIfLengthIsAtLeast?: number;
+}
 
-// export const password = (options?: Partial<PasswordOptions>): ScrubField<string, PasswordOptions> => {
-//   const { validate: stringValidate, schema } = string({
-//     ...defaultPasswordOptions,
-//     ...options,
-//   });
+export const serializeKeys = new Set<keyof PasswordOptions>([
+  ...stringSerializeKeys,
+  'requireLowerCase',
+  'requireNumber',
+  'requireSymbol',
+  'requireUpperCase',
+  'ignoreRequirementsIfLengthIsAtLeast',
+]);
 
-//   const validate: ValidationCallback = (state: ValidationState) => {
-//     stringValidate(state);
-//     if (typeof state.value !== 'string') {
-//       return;
-//     }
+export class PasswordValidator<T = string> extends StringValidator<T> implements PasswordOptions<T> {
+  requireLowerCase = false;
+  requireNumber = false;
+  requireSymbol = false;
+  requireUpperCase = false;
+  ignoreRequirementsIfLengthIsAtLeast?: number;
 
-//     if (
-//       schema.ignoreRequirementsIfLengthIsAtLeast !== undefined &&
-//       state.value.length >= schema.ignoreRequirementsIfLengthIsAtLeast
-//     ) {
-//       return;
-//     }
+  constructor() {
+    super();
+    (this as any).serializeKeys = serializeKeys;
+  }
 
-//     const alternative =
-//       schema.ignoreRequirementsIfLengthIsAtLeast !== undefined
-//         ? ` or make your password at least ${schema.ignoreRequirementsIfLengthIsAtLeast}`
-//         : '';
-//     state.assert(
-//       schema.requireUpperCase !== true || /[A-Z]/.test(state.value),
-//       `Please enter a capital letter (such as A)${alternative}`
-//     );
-//     state.assert(
-//       schema.requireLowerCase !== true || /[a-z]/.test(state.value),
-//       `Please enter a lower case letter (such as a)${alternative}`
-//     );
-//     state.assert(
-//       schema.requireNumber !== true || /[0-9]/.test(state.value),
-//       `Please enter a number (such as 0)${alternative}`
-//     );
-//     state.assert(
-//       schema.requireSymbol !== true || /[`~!@#$%^&*()+=:;'"<>/?_-]/.test(state.value),
-//       `Please enter a symbol (such as #)${alternative}`
-//     );
-//   };
+  protected _validate(value: any): T | undefined {
+    value = super._validate(value);
+    if (!value || value === '') {
+      return value;
+    }
 
-//   return { validate, schema };
-// };
+    if (
+      this.ignoreRequirementsIfLengthIsAtLeast !== undefined &&
+      value.length >= this.ignoreRequirementsIfLengthIsAtLeast
+    ) {
+      return value;
+    }
+
+    const alternative =
+      this.ignoreRequirementsIfLengthIsAtLeast !== undefined
+        ? ` or make your password at least ${this.ignoreRequirementsIfLengthIsAtLeast}`
+        : '';
+    assert(
+      this.requireUpperCase !== true || /[A-Z]/.test(value),
+      `Please enter a capital letter (such as A)${alternative}`
+    );
+    assert(
+      this.requireLowerCase !== true || /[a-z]/.test(value),
+      `Please enter a lower case letter (such as a)${alternative}`
+    );
+    assert(this.requireNumber !== true || /[0-9]/.test(value), `Please enter a number (such as 0)${alternative}`);
+    assert(
+      this.requireSymbol !== true || /[`~!@#$%^&*()+=:;'"<>/?_-]/.test(value),
+      `Please enter a symbol (such as #)${alternative}`
+    );
+
+    return value;
+  }
+}
+
+export function password(options?: Partial<PasswordOptions<string | undefined>>): PasswordValidator<string> {
+  const password = new PasswordValidator();
+  if (options) {
+    copyFilteredObject(password, options, password.serializeKeys);
+  }
+
+  return password;
+}

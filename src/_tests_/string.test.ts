@@ -1,5 +1,5 @@
 import { fields } from '..';
-import { allTypes, failedValidation, successfulValidation, successOrFailure } from './common';
+import { allTypes, successOrFailure } from './common';
 
 describe('type tests', () => {
   test('string is valid', () => {

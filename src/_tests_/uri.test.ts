@@ -29,7 +29,7 @@ describe('uri tests', () => {
 });
 
 describe('schema test', () => {
-  const defaultSettings: Partial<UriOptions> = {
+  const defaultSettings: UriOptions = {
     empty: false,
     allow: ['all'],
     allowTypes: [],

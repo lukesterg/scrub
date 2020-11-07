@@ -10,7 +10,7 @@ export interface StringOptions<T = number>
   extends Empty,
     AllowTypesUserOptions<StringAllowOptions>,
     MinMaxLengthRangeUserOptions,
-    ChoicesUserOptions<T> {}
+    Partial<ChoicesUserOptions<T>> {}
 
 const conversions: ConversionCallback<StringAllowOptions> = {
   number: function (this: StringValidator, value: any) {
