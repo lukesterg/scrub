@@ -1,4 +1,4 @@
-import { assert, copyFilteredObject, Empty, ScrubError, ValidationField } from '../utilities';
+import { assert, copyFilteredObject, Empty, NoValue, ScrubError, ValidationField } from '../common';
 import { AllowTypeConverter, ConversionCallback, AllowOptions, AllowTypesUserOptions } from '../validators/allow';
 import { Choices, ChoicesUserOptions, AllChoiceOptions } from '../validators/choice';
 import { MinMaxRangeUserOptions, Range, RangeLimitType } from '../validators/range';
@@ -15,10 +15,10 @@ interface NumberOptions<T = number>
 }
 
 const conversions: ConversionCallback<NumberAllowOptions> = {
-  string: function (this: Number, value: any) {
+  string: function (this: NumberValidator, value: any) {
     if (value === '') {
       assert(this.empty, 'Please enter a value');
-      return undefined;
+      return NoValue;
     }
 
     // remove punctuation (ie: 123, 000).
@@ -45,10 +45,10 @@ const conversions: ConversionCallback<NumberAllowOptions> = {
     return converted;
   },
 };
-const optionKeys = new Set<keyof NumberOptions>(['allowTypes', 'choices', 'empty', 'max', 'min', 'precision']);
+const serializeKeys = new Set<keyof NumberOptions>(['allowTypes', 'choices', 'empty', 'max', 'min', 'precision']);
 
-class Number<T = number> extends ValidationField<T> implements NumberOptions<T> {
-  readonly serializeKeys = optionKeys;
+class NumberValidator<T = number> extends ValidationField<T, Partial<NumberOptions<T>>> implements NumberOptions<T> {
+  readonly serializeKeys = serializeKeys;
 
   private _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
   private _allowedTypes = new AllowTypeConverter<NumberAllowOptions>({ default: [] });
@@ -113,15 +113,15 @@ class Number<T = number> extends ValidationField<T> implements NumberOptions<T> 
   }
 }
 
-export function number(): Number<number>;
+export function number(): NumberValidator<number>;
 export function number(
   options?: Partial<NumberOptions<number | undefined>> & { empty: true }
-): Number<number | undefined>;
-export function number(options?: Partial<NumberOptions<number | undefined>>): Number<number>;
+): NumberValidator<number | undefined>;
+export function number(options?: Partial<NumberOptions<number | undefined>>): NumberValidator<number>;
 export function number(
   options?: Partial<NumberOptions<number | undefined>>
-): Number<number> | Number<number | undefined> {
-  const number = new Number();
+): NumberValidator<number> | NumberValidator<number | undefined> {
+  const number = new NumberValidator();
   if (options) {
     copyFilteredObject(number, options, number.serializeKeys);
   }

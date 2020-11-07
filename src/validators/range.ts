@@ -1,7 +1,7 @@
-import { interceptThrow, ScrubError } from '../utilities';
-import { assert } from '../utilities';
+import { interceptThrow, ScrubError } from '../common';
+import { assert } from '../common';
 
-interface RangeLimitInclusiveOption {
+export interface RangeLimitInclusiveOption {
   value: number;
   inclusive?: boolean;
 }
@@ -11,6 +11,11 @@ export type RangeLimitType = RangeLimitInclusiveOption | number | undefined;
 export interface MinMaxRangeUserOptions {
   min?: RangeLimitType;
   max?: RangeLimitType;
+}
+
+export interface MinMaxLengthRangeUserOptions {
+  minLength?: number;
+  maxLength?: number;
 }
 
 export class Range implements MinMaxRangeUserOptions {

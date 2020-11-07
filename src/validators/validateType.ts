@@ -1,4 +1,4 @@
-import { assert } from '../utilities';
+import { assert } from '../common';
 
 export type TypeOfTypes = 'string' | 'number' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'object' | 'function';
 

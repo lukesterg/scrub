@@ -1,5 +1,5 @@
 import { fields } from '..';
-import { allTypes, failedValidation, successfulValidation, successOrFailure } from './common';
+import { allTypes, successOrFailure } from './common';
 
 describe('type tests', () => {
   test('number is valid', () => {
@@ -10,7 +10,7 @@ describe('type tests', () => {
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'number');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const validator = fields.number({ allowTypes: [] });
+    const validator = fields.number();
     const perform = () => validator.validate(value);
     expect(perform).toThrow();
   });
@@ -68,8 +68,7 @@ describe('length test', () => {
     [2.01, false, false],
   ])('value=%s min=1 max=2 inclusive=%s valid=%s', (value, inclusive, valid) => {
     const schema = fields.number({ min: { value: 1, inclusive }, max: { value: 2, inclusive } });
-    const perform = () => schema.validate(value);
-    successOrFailure(perform, valid, value);
+    successOrFailure(schema, value, valid, value);
   });
 });
 
@@ -98,8 +97,7 @@ describe('string conversion', () => {
     ['a', undefined],
   ])('value=%s expected=%s', (value, expected) => {
     const schema = fields.number({ allowTypes: ['string'] });
-    const perform = () => schema.validate(value);
-    successOrFailure(perform, expected !== undefined, expected);
+    successOrFailure(schema, value, expected !== undefined, expected);
   });
 
   test.each([
@@ -112,8 +110,7 @@ describe('string conversion', () => {
     ['-0.12345678901234567', 4, -0.1234],
   ])('value=%s precision=%s expected=%s', (value, precision, expected) => {
     const schema = fields.number({ allowTypes: ['string'], precision });
-    const perform = () => schema.validate(value);
-    successOrFailure(perform, expected !== undefined, expected);
+    successOrFailure(schema, value, expected !== undefined, expected);
   });
 
   test('value= empty=true isValid=true', () => {
@@ -141,8 +138,7 @@ describe('precision', () => {
     [0, 0, 0],
   ])('value=%s precision=%s expected=%s', (value, precision, expected) => {
     const schema = fields.number({ precision });
-    const perform = () => schema.validate(value);
-    successOrFailure(perform, expected !== undefined, expected);
+    successOrFailure(schema, value, expected !== undefined, expected);
   });
 });
 
@@ -162,7 +158,6 @@ describe('choices', () => {
 
   test.each(choicesTest)('choices=%s value=%s valid=%s', (choices, value, valid) => {
     const schema = fields.number({ choices, allowTypes: 'string' });
-    const perform = () => schema.validate(value);
-    successOrFailure(perform, valid, +value);
+    successOrFailure(schema, value, valid, +value);
   });
 });

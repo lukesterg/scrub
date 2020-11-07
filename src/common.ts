@@ -45,10 +45,23 @@ interface ValidationResult<T> {
   error?: string;
 }
 
+export type ErrorKeys<T> = keyof T | '_';
+export type ObjectErrorType<T> = { [key in ErrorKeys<T>]?: string };
+
 export class ValidatorError extends ScrubError {
   constructor(message: string) {
     super(message);
     Object.setPrototypeOf(this, ValidatorError.prototype);
+  }
+}
+
+export class ObjectValidatorError<T> extends ValidatorError {
+  readonly objectError: ObjectErrorType<T>;
+
+  constructor(objectError: ObjectErrorType<T>) {
+    super('Object failed to validate');
+    Object.setPrototypeOf(this, ObjectValidatorError.prototype);
+    this.objectError = objectError;
   }
 }
 
@@ -65,12 +78,12 @@ export const copyFilteredObject = (dest: any, src: any, fields: Set<string>) => 
   return dest;
 };
 
-export abstract class ValidationField<Type> {
+export abstract class ValidationField<Type, SerializeType> {
   abstract readonly serializeKeys: Set<string>;
 
   protected abstract _validate(value: any): Type | undefined;
 
-  serialize() {
+  serialize(): SerializeType {
     const result: any = {};
     this.serializeKeys.forEach((key) => {
       const value = (this as any)[key];
@@ -83,8 +96,8 @@ export abstract class ValidationField<Type> {
     return result;
   }
 
-  validate(value: any, options?: ValidationOptions & { throwOnFailure: false }): ValidationResult<Type>;
   validate(value: any, options?: ValidationOptions & { throwOnFailure: true }): Type;
+  validate(value: any, options?: ValidationOptions & { throwOnFailure: false }): ValidationResult<Type>;
   validate(value: any): Type;
   validate(value: any, options?: ValidationOptions): ValidationResult<Type> | Type {
     const throwOnFailure = options?.throwOnFailure !== false;
@@ -106,6 +119,14 @@ export abstract class ValidationField<Type> {
   }
 }
 
+export const NoValue = Symbol('no-value');
+
 export interface Empty {
   empty: boolean;
 }
+
+export interface Undefined {
+  undefined: boolean;
+}
+
+export type GetType<T> = T extends ValidationField<infer U, infer V> ? U : unknown;

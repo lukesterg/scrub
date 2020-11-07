@@ -1,4 +1,4 @@
-import { arrayToCommaListString, assert, ScrubError } from '../utilities';
+import { arrayToCommaListString, assert, ScrubError } from '../common';
 
 export type AllChoiceOptions<T> = T | T[] | undefined;
 
