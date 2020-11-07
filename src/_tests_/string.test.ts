@@ -1,4 +1,5 @@
 import { fields } from '..';
+import { StringOptions } from '../fields/string';
 import { allTypes, successOrFailure } from './common';
 
 describe('type tests', () => {
@@ -107,5 +108,26 @@ describe('choices', () => {
   test.each(choicesTest)('choices=%s value=%s valid=%s', (choices, value, valid) => {
     const schema = fields.string({ choices, allowTypes: 'all' });
     successOrFailure(schema, value, valid, value.toString());
+  });
+});
+
+describe('transformations', () => {
+  const tests: [string, Partial<StringOptions>, string][] = [
+    [' aB ', {}, ' aB '],
+    [' aB ', { transformString: 'trimStart' }, 'aB '],
+    [' aB ', { transformString: 'trimEnd' }, ' aB'],
+    [' aB ', { transformString: 'trim' }, 'aB'],
+    [' aB ', { transformString: 'upperCase' }, ' AB '],
+    [' aB ', { transformString: 'lowerCase' }, ' ab '],
+    [' aB ', { transformString: ['trim', 'lowerCase'] }, 'ab'],
+  ];
+  test.each(tests)('value=%s expected=%s', (value, options, expected) => {
+    const schema = fields.string(options);
+    successOrFailure(schema, value, true, expected);
+  });
+
+  test('only one case transformation is allowed', () => {
+    const perform = () => fields.string({ transformString: ['upperCase', 'lowerCase'] });
+    expect(perform).toThrow();
   });
 });
