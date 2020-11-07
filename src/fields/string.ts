@@ -1,4 +1,4 @@
-import { assert, copyFilteredObject, Empty, ScrubError, Undefined, ValidationField } from '../common';
+import { assert, copyFilteredObject, Empty, ValidationField } from '../common';
 import { AllowTypeConverter, ConversionCallback, AllowOptions, AllowTypesUserOptions } from '../validators/allow';
 import { Choices, ChoicesUserOptions, AllChoiceOptions } from '../validators/choice';
 import { Range, MinMaxLengthRangeUserOptions, RangeLimitInclusiveOption } from '../validators/range';
@@ -6,7 +6,7 @@ import { validateType } from '../validators/validateType';
 
 type StringAllowOptions = 'number' | 'boolean' | 'bigint';
 
-interface StringOptions<T = number>
+export interface StringOptions<T = number>
   extends Empty,
     AllowTypesUserOptions<StringAllowOptions>,
     MinMaxLengthRangeUserOptions,
@@ -24,14 +24,16 @@ const conversions: ConversionCallback<StringAllowOptions> = {
   },
 };
 
-const serializeKeys = new Set<keyof StringOptions>(['allowTypes', 'choices', 'empty', 'maxLength', 'minLength']);
+export const serializeKeys = new Set<keyof StringOptions>(['allowTypes', 'choices', 'empty', 'maxLength', 'minLength']);
 
-class StringValidator<T = string> extends ValidationField<T, Partial<StringOptions<T>>> implements StringOptions<T> {
+export class StringValidator<T = string>
+  extends ValidationField<T, Partial<StringOptions<T>>>
+  implements StringOptions<T> {
   readonly serializeKeys = serializeKeys;
 
-  private _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
-  private _allowedTypes = new AllowTypeConverter<StringAllowOptions>({ default: [] });
-  private _choices = new Choices<T>();
+  protected _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
+  protected _allowedTypes = new AllowTypeConverter<StringAllowOptions>({ default: [] });
+  protected _choices = new Choices<T>();
 
   empty = false;
 

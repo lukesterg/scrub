@@ -6,7 +6,7 @@ import { validateType } from '../validators/validateType';
 
 type NumberAllowOptions = 'string';
 
-interface NumberOptions<T = number>
+export interface NumberOptions<T = number>
   extends Empty,
     AllowTypesUserOptions<NumberAllowOptions>,
     MinMaxRangeUserOptions,
@@ -50,10 +50,10 @@ const serializeKeys = new Set<keyof NumberOptions>(['allowTypes', 'choices', 'em
 class NumberValidator<T = number> extends ValidationField<T, Partial<NumberOptions<T>>> implements NumberOptions<T> {
   readonly serializeKeys = serializeKeys;
 
-  private _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
-  private _allowedTypes = new AllowTypeConverter<NumberAllowOptions>({ default: [] });
-  private _choices = new Choices<T>();
-  private _precision?: number;
+  protected _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
+  protected _allowedTypes = new AllowTypeConverter<NumberAllowOptions>({ default: [] });
+  protected _choices = new Choices<T>();
+  protected _precision?: number;
 
   empty = false;
 

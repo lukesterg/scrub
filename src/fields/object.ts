@@ -15,7 +15,7 @@ import { validateType } from '../validators/validateType';
 export type ValidatedType<T> = { [key in keyof T]: GetType<T[key]> };
 export type ObjectAdditionalFieldType = 'strip' | 'error' | 'merge';
 
-export interface ObjectUserOptions<T> extends Partial<Undefined> {
+export interface ObjectOptions<T> extends Partial<Undefined> {
   fields: T;
   additionalFields?: ObjectAdditionalFieldType;
 }
@@ -54,8 +54,8 @@ const serializeKeys = new Set(['fields', 'onUnknownField', 'additionalFields']);
 export type ValidatorType = { [key: string]: ValidationField<unknown, unknown> };
 
 class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedType<Fields>>
-  extends ValidationField<ValidatedType<Fields> | CanBeUndefined, Partial<ObjectUserOptions<Fields>>>
-  implements ObjectUserOptions<Fields> {
+  extends ValidationField<ValidatedType<Fields> | CanBeUndefined, Partial<ObjectOptions<Fields>>>
+  implements ObjectOptions<Fields> {
   serializeKeys = serializeKeys;
   undefined: boolean = false;
   fields: Fields;
@@ -137,11 +137,11 @@ class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedTy
 }
 
 export function object<T extends ValidatorType>(
-  options: ObjectUserOptions<T> & { undefined: true }
+  options: ObjectOptions<T> & { undefined: true }
 ): ObjectValidator<T, undefined>;
-export function object<T extends ValidatorType>(options: ObjectUserOptions<T>): ObjectValidator<T>;
+export function object<T extends ValidatorType>(options: ObjectOptions<T>): ObjectValidator<T>;
 export function object<T extends ValidatorType>(
-  options: ObjectUserOptions<T>
+  options: ObjectOptions<T>
 ): ObjectValidator<T, undefined> | ObjectValidator<T> {
   const object = new ObjectValidator(options.fields);
   copyFilteredObject(object, options, object.serializeKeys);
