@@ -1,33 +1,11 @@
 import { assert, copyFilteredObject } from '../common';
-import { Allow } from '../validators/allow';
-import { DomainTypes, DomainValidationOptions } from '../validators/domain';
 import { maximumEmailLength, validateEmail } from '../validators/email';
 import { RangeLimitInclusiveOption } from '../validators/range';
-import { DomainOptions } from './domain';
-import { StringOptions, StringValidator, serializeKeys as stringSerializeKeys } from './string';
+import { DomainOptions, DomainValidator, DomainValidatorOptionsBase } from './domain';
 
-export interface EmailOptions<T = string> extends StringOptions<T> {
-  allow: DomainValidationOptions;
-}
+export type EmailOptions<T = string> = DomainOptions<T>;
 
-export const serializeKeys = new Set<keyof DomainOptions>([...stringSerializeKeys, 'allow']);
-
-export class EmailValidator<T = string> extends StringValidator<T> implements EmailOptions<T> {
-  protected _allow = new Allow<DomainTypes>({ default: 'domain' });
-
-  constructor() {
-    super();
-    (this as any).serializeKeys = serializeKeys;
-  }
-
-  get allow(): DomainValidationOptions {
-    return this._allow.allow;
-  }
-
-  set allow(value: DomainValidationOptions) {
-    this._allow.allow = value;
-  }
-
+export class EmailValidator<T = string> extends DomainValidatorOptionsBase<T> implements EmailOptions<T> {
   get maxLength(): number {
     return (this._range.max as RangeLimitInclusiveOption)?.value || maximumEmailLength;
   }
@@ -44,10 +22,10 @@ export class EmailValidator<T = string> extends StringValidator<T> implements Em
 }
 
 export function email(options?: Partial<EmailOptions<string | undefined>>): EmailValidator<string> {
-  const string = new EmailValidator();
+  const email = new EmailValidator();
   if (options) {
-    copyFilteredObject(string, options, string.serializeKeys);
+    copyFilteredObject(email, options, email.serializeKeys);
   }
 
-  return string;
+  return email;
 }

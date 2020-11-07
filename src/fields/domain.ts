@@ -10,7 +10,7 @@ export interface DomainOptions<T = string> extends StringOptions<T> {
 
 export const serializeKeys = new Set<keyof DomainOptions>([...stringSerializeKeys, 'allow']);
 
-export class DomainValidator<T = string> extends StringValidator<T> implements DomainOptions<T> {
+export class DomainValidatorOptionsBase<T> extends StringValidator<T> implements DomainOptions<T> {
   protected _allow = new Allow<DomainTypes>({ default: 'domain' });
 
   constructor() {
@@ -25,7 +25,9 @@ export class DomainValidator<T = string> extends StringValidator<T> implements D
   set allow(value: DomainValidationOptions) {
     this._allow.allow = value;
   }
+}
 
+export class DomainValidator<T = string> extends DomainValidatorOptionsBase<T> {
   get maxLength(): number {
     return (this._range.max as RangeLimitInclusiveOption)?.value || maximumDomainLength;
   }
@@ -42,10 +44,10 @@ export class DomainValidator<T = string> extends StringValidator<T> implements D
 }
 
 export function domain(options?: Partial<DomainOptions<string | undefined>>): DomainValidator<string> {
-  const string = new DomainValidator();
+  const domain = new DomainValidator();
   if (options) {
-    copyFilteredObject(string, options, string.serializeKeys);
+    copyFilteredObject(domain, options, domain.serializeKeys);
   }
 
-  return string;
+  return domain;
 }
