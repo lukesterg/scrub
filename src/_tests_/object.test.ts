@@ -126,9 +126,13 @@ test.only('custom validation', () => {
       guardian: scrub.string({ transformString: ['trim', 'title'], empty: true }),
     },
     customValidation: (state) => {
-      if (state.cleanedFields.age !== undefined && state.cleanedFields.age < 18 && state.cleanedFields.guardian === '') {
+      if (
+        state.cleanedFields.age !== undefined &&
+        state.cleanedFields.age < 18 &&
+        state.cleanedFields.guardian === ''
+      ) {
         state.addError('Parent or guardian name is required if the person is under 18 years of age', 'guardian');
       }
-    }
+    },
   });
 });

@@ -6,7 +6,14 @@ import { validateType } from '../validators/validateType';
 
 export type StringAllowOptions = 'number' | 'boolean' | 'bigint';
 
-export type TransformStringOptions = 'upperCase' | 'lowerCase' | 'title' | 'upperCaseFirst' | 'trimStart' | 'trimEnd' | 'trim';
+export type TransformStringOptions =
+  | 'upperCase'
+  | 'lowerCase'
+  | 'title'
+  | 'upperCaseFirst'
+  | 'trimStart'
+  | 'trimEnd'
+  | 'trim';
 export type TransformStringType = TransformStringOptions | TransformStringOptions[];
 
 export interface StringOptions<T = string>
@@ -66,7 +73,7 @@ export class StringValidator<T = string>
       newTransformString.has('lowerCase'),
       newTransformString.has('upperCase'),
       newTransformString.has('title'),
-      newTransformString.has('upperCaseFirst'),
+      newTransformString.has('upperCaseFirst')
     );
     if (numberOfCaseChangingOperations > 1) {
       throw new ScrubError('Up to one case changing operation can be set');
@@ -124,9 +131,9 @@ export class StringValidator<T = string>
     } else if (this._transformString.has('lowerCase')) {
       value = value.toLowerCase();
     } else if (this._transformString.has('title')) {
-      value = value.replace(/\b(\w)/g, (match) => match.toUpperCase())
+      value = value.replace(/\b(\w)/g, (match) => match.toUpperCase());
     } else if (this._transformString.has('upperCaseFirst')) {
-      value = value.replace(/\b(\w)/, (match) => match.toUpperCase())
+      value = value.replace(/\b(\w)/, (match) => match.toUpperCase());
     }
 
     return value;
