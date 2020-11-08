@@ -129,6 +129,6 @@ export interface Undefined {
   undefined: boolean;
 }
 
-export type GetType<T> = T extends ValidationField<infer U, infer V> ? U : unknown;
+export type GetType<T> = T extends ValidationField<infer U, unknown> ? U : unknown;
 
 export const countIfTrue = (...args: boolean[]) => args.filter((i) => i).length;

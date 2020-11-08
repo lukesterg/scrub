@@ -14,12 +14,6 @@ import { validateType } from '../validators/validateType';
 
 export type ValidatedType<T> = { [key in keyof T]: GetType<T[key]> };
 export type ObjectAdditionalFieldType = 'strip' | 'error' | 'merge';
-
-export interface ObjectOptions<T> extends Partial<Undefined> {
-  fields: T;
-  additionalFields?: ObjectAdditionalFieldType;
-}
-
 class ObjectValidationState<T> {
   private _errors: ObjectErrorType<T> = {};
   private _cleanedFields: Partial<ValidatedType<T>> = {};
@@ -49,6 +43,14 @@ class ObjectValidationState<T> {
   }
 }
 
+export type CleanCallback<T> = (state: ObjectValidationState<T>) => void;
+
+export interface ObjectOptions<T> extends Partial<Undefined> {
+  fields: T;
+  additionalFields?: ObjectAdditionalFieldType;
+  customValidation?: CleanCallback<T>;
+}
+
 const serializeKeys = new Set(['fields', 'onUnknownField', 'additionalFields']);
 
 export type ValidatorType = { [key: string]: ValidationField<unknown, unknown> };
@@ -60,6 +62,7 @@ class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedTy
   undefined: boolean = false;
   fields: Fields;
   additionalFields: ObjectAdditionalFieldType = 'strip';
+  customValidation?: CleanCallback<Fields>;
 
   constructor(fields: Fields) {
     super();
@@ -128,6 +131,8 @@ class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedTy
       keysNotInSchema.forEach((key) => state.addCleanedField(value[key], key));
     }
 
+    this.customValidation?.(state);
+
     if (state.hasError) {
       throw new ObjectValidatorError(state.errors);
     }
@@ -140,10 +145,15 @@ export function object<T extends ValidatorType>(
   options: ObjectOptions<T> & { undefined: true }
 ): ObjectValidator<T, undefined>;
 export function object<T extends ValidatorType>(options: ObjectOptions<T>): ObjectValidator<T>;
+export function object<T extends ValidatorType>(obj: T): ObjectValidator<T>;
 export function object<T extends ValidatorType>(
-  options: ObjectOptions<T>
+  options: ObjectOptions<T> | T
 ): ObjectValidator<T, undefined> | ObjectValidator<T> {
-  const object = new ObjectValidator(options.fields);
+  if (!options.fields) {
+    options = { fields: options } as ObjectOptions<T>;
+  }
+
+  const object = new ObjectValidator((options as ObjectOptions<T>).fields);
   copyFilteredObject(object, options, object.serializeKeys);
   return object;
 }

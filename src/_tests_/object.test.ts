@@ -1,17 +1,18 @@
-import { fields } from '..';
+import * as scrub from '..';
 import { allTypes, successOrFailure } from './common';
 import { ObjectAdditionalFieldType } from '../fields/object';
+import { GetType } from '../common';
 
 describe('type tests', () => {
   test('object is valid', () => {
     const expected = {};
-    const actual = fields.object({ fields: {} }).validate(expected);
+    const actual = scrub.object({ fields: {} }).validate(expected);
     expect(actual).toEqual(expected);
   });
 
   const invalidType = allTypes.map((value) => [typeof value, value]).filter(([type]) => type !== 'object');
   test.each(invalidType)('type %s is invalid', (_, value) => {
-    const validator = fields.object({ fields: {} });
+    const validator = scrub.object({ fields: {} });
     const perform = () => validator.validate(value);
     expect(perform).toThrow();
   });
@@ -22,14 +23,14 @@ describe('fields', () => {
     [{}, {}, 'strip', {}],
     [{ a: 'a' }, {}, 'strip', {}],
     [{ a: 'a' }, {}, 'merge', { a: 'a' }],
-    [{ a: 'a' }, { a: fields.string() }, 'strip', { a: 'a' }],
-    [{ a: 'a', b: 'a' }, { a: fields.string(), b: fields.string() }, 'strip', { a: 'a', b: 'a' }],
+    [{ a: 'a' }, { a: scrub.string() }, 'strip', { a: 'a' }],
+    [{ a: 'a', b: 'a' }, { a: scrub.string(), b: scrub.string() }, 'strip', { a: 'a', b: 'a' }],
   ];
 
   test.each(successfulTests)(
     'input=%s schema=%s additionalField=%s expected=%s is valid',
     (input, objectSchema, additionalFields, expected) => {
-      const schema = fields.object({ fields: objectSchema, additionalFields });
+      const schema = scrub.object({ fields: objectSchema, additionalFields });
       successOrFailure(schema, input, true, expected);
     }
   );
@@ -37,15 +38,15 @@ describe('fields', () => {
   const invalidTests: [any, any, ObjectAdditionalFieldType, string[]][] = [
     [{ a: '' }, {}, 'error', ['a']],
     [{ a: '', b: '' }, {}, 'error', ['a', 'b']],
-    [{ a: '' }, { a: fields.string() }, 'strip', ['a']],
-    [{}, { a: fields.string() }, 'strip', ['a']],
-    [{}, { a: fields.string() }, 'merge', ['a']],
-    [{ a: '', b: '' }, { a: fields.string(), b: fields.string() }, 'strip', ['a', 'b']],
+    [{ a: '' }, { a: scrub.string() }, 'strip', ['a']],
+    [{}, { a: scrub.string() }, 'strip', ['a']],
+    [{}, { a: scrub.string() }, 'merge', ['a']],
+    [{ a: '', b: '' }, { a: scrub.string(), b: scrub.string() }, 'strip', ['a', 'b']],
   ];
   test.each(invalidTests)(
     'input=%s schema=%s additionalFields=%s errorField=%s is invalid',
     (input, objectSchema, additionalFields, errorFields) => {
-      const schema = fields.object({ fields: objectSchema, additionalFields });
+      const schema = scrub.object({ fields: objectSchema, additionalFields });
       successOrFailure(schema, input, false, undefined, errorFields);
     }
   );
@@ -53,25 +54,25 @@ describe('fields', () => {
 
 describe('recursion', () => {
   const successfulTests: [any, any, ObjectAdditionalFieldType, any][] = [
-    [{ a: { b: 'a' } }, { a: { b: fields.string() } }, 'strip', { a: { b: 'a' } }],
+    [{ a: { b: 'a' } }, { a: { b: scrub.string() } }, 'strip', { a: { b: 'a' } }],
     [{ a: { b: 'a' } }, { a: {} }, 'strip', { a: {} }],
-    [{ a: { b: { c: 'a' } } }, { a: { b: { c: fields.string() } } }, 'strip', { a: { b: { c: 'a' } } }],
+    [{ a: { b: { c: 'a' } } }, { a: { b: { c: scrub.string() } } }, 'strip', { a: { b: { c: 'a' } } }],
     [{ a: {} }, {}, 'strip', {}],
   ];
 
   test.each(successfulTests)(
     'input=%s schema=%s additionalField=%s expected=%s',
     (input, objectSchema, additionalFields, expected) => {
-      const schema = fields.object({ fields: objectSchema, additionalFields });
+      const schema = scrub.object({ fields: objectSchema, additionalFields });
       successOrFailure(schema, input, true, expected);
     }
   );
 
   const invalidTests: [any, any, ObjectAdditionalFieldType, any][] = [
-    [{ a: {} }, { a: { b: fields.string() } }, 'strip', { a: { b: expect.any(String) } }],
+    [{ a: {} }, { a: { b: scrub.string() } }, 'strip', { a: { b: expect.any(String) } }],
     [
       { a: { c: {} } },
-      { a: { b: fields.string(), c: { d: fields.string() } } },
+      { a: { b: scrub.string(), c: { d: scrub.string() } } },
       'strip',
       { a: { b: expect.any(String), c: { d: expect.any(String) } } },
     ],
@@ -80,7 +81,7 @@ describe('recursion', () => {
   test.each(invalidTests)(
     'input=%s schema=%s additionalFields=%s errorField=%s',
     (input, objectSchema, additionalFields, errorFields) => {
-      const schema = fields.object({ fields: objectSchema, additionalFields });
+      const schema = scrub.object({ fields: objectSchema, additionalFields });
       successOrFailure(schema, input, false, undefined, errorFields);
     }
   );
@@ -93,26 +94,41 @@ describe('schema test', () => {
   };
 
   test('default options', () => {
-    const schema = fields.object({ fields: {} });
+    const schema = scrub.object({ fields: {} });
     expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
-    const schema = fields.object({ fields: {}, additionalFields: 'error' });
+    const schema = scrub.object({ fields: {}, additionalFields: 'error' });
     expect(schema.serialize()).toEqual({ ...defaultSettings, additionalFields: 'error' });
   });
 
   test('inner fields schemas are exposed', () => {
-    const schema = fields.object({ fields: { a: fields.object({ fields: {} }) } });
+    const schema = scrub.object({ fields: { a: scrub.object({ fields: {} }) } });
     expect(schema.serialize()).toEqual({ ...defaultSettings, fields: { a: defaultSettings } });
   });
 
   test('nested object schemas are exposed', () => {
-    const schema = fields.object({ fields: { a: fields.object({ fields: { b: fields.object({ fields: {} }) } }) } });
+    const schema = scrub.object({ fields: { a: scrub.object({ fields: { b: scrub.object({ fields: {} }) } }) } });
 
     expect(schema.serialize()).toEqual({
       ...defaultSettings,
       fields: { a: { ...defaultSettings, fields: { b: defaultSettings } } },
     });
+  });
+});
+
+test.only('custom validation', () => {
+  const personValidator = scrub.object({
+    fields: {
+      name: scrub.string({ transformString: ['trim', 'title'] }),
+      age: scrub.number({ allowTypes: ['string'] }),
+      guardian: scrub.string({ transformString: ['trim', 'title'], empty: true }),
+    },
+    customValidation: (state) => {
+      if (state.cleanedFields.age !== undefined && state.cleanedFields.age < 18 && state.cleanedFields.guardian === '') {
+        state.addError('Parent or guardian name is required if the person is under 18 years of age', 'guardian');
+      }
+    }
   });
 });

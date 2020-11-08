@@ -1,4 +1,4 @@
-import { fields } from '..';
+import * as scrub from '..';
 import { successOrFailure } from './common';
 
 const ipV4Tests = [
@@ -57,7 +57,7 @@ export const allDomainTests = ipV4Tests.concat(ipV6Tests).concat(domainTests) as
 
 describe('domain verification tests', () => {
   test.each(allDomainTests)('allow=%s value=%s isValid=%s', (allow, value, isValid) => {
-    const schema = fields.domain({ allow: allow as any });
+    const schema = scrub.domain({ allow: allow as any });
     successOrFailure(schema, value, isValid, value);
   });
 });
@@ -71,12 +71,12 @@ describe('schema test', () => {
   };
 
   test('default options', () => {
-    const schema = fields.domain();
+    const schema = scrub.domain();
     expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
-    const schema = fields.domain({ allow: ['ip'] });
+    const schema = scrub.domain({ allow: ['ip'] });
     expect(schema.serialize()).toEqual({ ...defaultSettings, allow: ['ip'] });
   });
 });

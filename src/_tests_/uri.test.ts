@@ -1,4 +1,4 @@
-import { fields } from '..';
+import * as scrub from '..';
 import { UriOptions } from '../fields/uri';
 import { successOrFailure } from './common';
 
@@ -23,7 +23,7 @@ describe('uri tests', () => {
   ];
 
   test.each(passwordTests)('options=%s value=%s isValid=%s', (options, value, isValid) => {
-    const schema = fields.uri(options);
+    const schema = scrub.uri(options);
     successOrFailure(schema, value, isValid, value);
   });
 });
@@ -36,12 +36,12 @@ describe('schema test', () => {
   };
 
   test('default options', () => {
-    const schema = fields.uri();
+    const schema = scrub.uri();
     expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
-    const schema = fields.uri({ allowedProtocols: ['http'] });
+    const schema = scrub.uri({ allowedProtocols: ['http'] });
     expect(schema.serialize()).toEqual({ ...defaultSettings, allowedProtocols: ['http'] });
   });
 });

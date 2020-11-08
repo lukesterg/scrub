@@ -1,4 +1,4 @@
-import { fields } from '..';
+import * as scrub from '..';
 import { PasswordOptions } from '../fields/password';
 import { successOrFailure } from './common';
 
@@ -25,7 +25,7 @@ describe('password verification tests', () => {
   ];
 
   test.each(passwordTests)('options=%s value=%s isValid=%s', (options, value, isValid) => {
-    const schema = fields.password(options);
+    const schema = scrub.password(options);
     successOrFailure(schema, value, isValid, value);
   });
 });
@@ -41,12 +41,12 @@ describe('schema test', () => {
   };
 
   test('default options', () => {
-    const schema = fields.password();
+    const schema = scrub.password();
     expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
-    const schema = fields.password({ ignoreRequirementsIfLengthIsAtLeast: 2 });
+    const schema = scrub.password({ ignoreRequirementsIfLengthIsAtLeast: 2 });
     expect(schema.serialize()).toEqual({ ...defaultSettings, ignoreRequirementsIfLengthIsAtLeast: 2 });
   });
 });
