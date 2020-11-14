@@ -6,6 +6,7 @@ const personValidator = scrub.object({
 });
 
 type PersonType = scrub.GetType<typeof personValidator>;
+
 const validPerson: PersonType = {
   name: 'Homer Simpson',
   age: 39,

@@ -1,0 +1,21 @@
+site_name: Scrub Validation
+site_url: https://github.com/lukesterg/scrub
+site_description: JS validation library
+site_author: Luke Geraghty
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+
+repo_name: 'GitHub'
+repo_url: 'https://github.com/lukesterg/scrub'
+
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.tabbed
+  - toc:
+      permalink: True
+  - md_condition:
+      symbol: SCRUB

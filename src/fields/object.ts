@@ -1,9 +1,7 @@
 import {
-  arrayToCommaListString,
   copyFilteredObject,
   ErrorKeys,
   GetType,
-  NoValue,
   ObjectErrorType,
   ObjectValidatorError,
   Undefined,
@@ -31,10 +29,6 @@ class ObjectValidationState<T> {
   }
 
   addCleanedField(value: any, field: keyof T) {
-    if (value === NoValue) {
-      return;
-    }
-
     this._cleanedFields[field] = value;
   }
 
@@ -51,7 +45,7 @@ export interface ObjectOptions<T> extends Partial<Undefined> {
   customValidation?: CleanCallback<T>;
 }
 
-const serializeKeys = new Set(['fields', 'onUnknownField', 'additionalFields']);
+const serializeKeys = new Set(['fields', 'onUnknownField', 'additionalFields', 'customValidation']);
 
 export type ValidatorType = { [key: string]: ValidationField<unknown, unknown> };
 
@@ -60,7 +54,7 @@ class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedTy
   implements ObjectOptions<Fields> {
   serializeKeys = serializeKeys;
   undefined: boolean = false;
-  fields: Fields;
+  readonly fields: Fields;
   additionalFields: ObjectAdditionalFieldType = 'strip';
   customValidation?: CleanCallback<Fields>;
 
@@ -79,7 +73,8 @@ class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedTy
       Fields,
       CanBeUndefined
     >;
-    clone.fields = field;
+    (clone as any).fields = field;
+    clone.customValidation = undefined;
     return clone;
   }
 

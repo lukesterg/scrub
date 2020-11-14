@@ -15,6 +15,7 @@ export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> impl
     super();
     (this as any).serializeKeys = serializeKeys;
     this.allow = 'all';
+    this.allowedProtocols = ['https'];
   }
 
   protected _validate(value: any): T | undefined {

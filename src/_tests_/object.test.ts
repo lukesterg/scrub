@@ -118,21 +118,21 @@ describe('schema test', () => {
   });
 });
 
-test.only('custom validation', () => {
-  const personValidator = scrub.object({
-    fields: {
-      name: scrub.string({ transformString: ['trim', 'title'] }),
-      age: scrub.number({ allowTypes: ['string'] }),
-      guardian: scrub.string({ transformString: ['trim', 'title'], empty: true }),
-    },
-    customValidation: (state) => {
-      if (
-        state.cleanedFields.age !== undefined &&
-        state.cleanedFields.age < 18 &&
-        state.cleanedFields.guardian === ''
-      ) {
-        state.addError('Parent or guardian name is required if the person is under 18 years of age', 'guardian');
-      }
-    },
+describe('custom validation', () => {
+  const tests: [any, boolean, any][] = [
+    [{ a: 1, b: 1 }, true, { a: 1, b: 1 }],
+    [{ a: 2, b: '' }, true, { a: 2, b: undefined }],
+    [{ a: 1, b: '' }, false, { a: 1, b: undefined }],
+  ];
+  test.each(tests)('value=%s isValid=%s', (value, isValid, expected) => {
+    const schema = scrub.object({
+      fields: { a: scrub.number(), b: scrub.number({ empty: true, allowTypes: ['string'] }) },
+      customValidation: (state) => {
+        if (state.cleanedFields.a !== undefined && state.cleanedFields.a < 2 && state.cleanedFields.b === undefined) {
+          state.addError('Field required', 'b');
+        }
+      },
+    });
+    successOrFailure(schema, value, isValid, expected);
   });
 });

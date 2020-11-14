@@ -15,10 +15,29 @@ const personValidator = scrub.object({
 
 type PersonType = scrub.GetType<typeof personValidator>;
 const validPerson: PersonType = {
-  name: 'Bart Simpson',
-  age: '10' as any,
+  name: 'Homer Simpson',
+  age: '39' as any,
   guardian: '',
 };
 
 console.log(personValidator.validate(validPerson));
 // { name: 'Homer Simpson', age: 39 }
+
+console.log(
+  personValidator.validate(
+    {
+      name: 'Bart Simpson',
+      age: '10' as any,
+      guardian: '',
+    },
+    { throwOnFailure: false }
+  )
+);
+// {
+//   result: undefined,
+//   success: false,
+//   error: 'Object failed to validate',
+//   fields: {
+//     guardian: 'Parent or guardian name is required if the person is under 18 years of age'
+//   }
+// }

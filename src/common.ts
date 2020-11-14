@@ -39,14 +39,15 @@ interface ValidationOptions {
   throwOnFailure: boolean;
 }
 
+export type ErrorKeys<T> = keyof T | '_';
+export type ObjectErrorType<T> = { [key in ErrorKeys<T>]?: string };
+
 interface ValidationResult<T> {
   success: boolean;
   result: T | undefined;
   error?: string;
+  fields?: ObjectErrorType<T>;
 }
-
-export type ErrorKeys<T> = keyof T | '_';
-export type ObjectErrorType<T> = { [key in ErrorKeys<T>]?: string };
 
 export class ValidatorError extends ScrubError {
   constructor(message: string) {
@@ -110,16 +111,20 @@ export abstract class ValidationField<Type, SerializeType> {
         throw e;
       }
 
-      return {
+      const result: ValidationResult<Type> = {
         result: undefined,
         success: false,
         error: e.message,
       };
+
+      if (e instanceof ObjectValidatorError) {
+        result.fields = e.objectError;
+      }
+
+      return result;
     }
   }
 }
-
-export const NoValue = Symbol('no-value');
 
 export interface Empty {
   empty: boolean;
