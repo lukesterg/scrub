@@ -1,6 +1,6 @@
 # Jazz
 
-![](https://github.com/lukesterg/scrub/workflows/build/badge.svg?branch=master) [![Documentation Status](https://readthedocs.org/projects/scrub/badge/?version=latest)](https://jazz-orm.readthedocs.io/en/latest/?badge=latest)
+![](https://github.com/lukesterg/scrub/workflows/build/badge.svg?branch=main) [![Documentation Status](https://readthedocs.org/projects/scrub/badge/?version=latest)](https://jazz-orm.readthedocs.io/en/latest/?badge=latest)
 
 ## Scrub
 
