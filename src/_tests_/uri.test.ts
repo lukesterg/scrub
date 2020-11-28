@@ -4,7 +4,7 @@ import { successOrFailure } from './common';
 
 describe('uri tests', () => {
   // prettier-ignore
-  const passwordTests: [Partial<UriOptions>, string, boolean][] = [
+  const uriTests: [Partial<UriOptions>, string, boolean][] = [
     [{empty: true}, '', false],
     [{}, 'a', false],
     [{}, 'http:', false],
@@ -22,7 +22,7 @@ describe('uri tests', () => {
 
   ];
 
-  test.each(passwordTests)('options=%s value=%s isValid=%s', (options, value, isValid) => {
+  test.each(uriTests)('options=%s value=%s isValid=%s', (options, value, isValid) => {
     const schema = scrub.uri(options);
     successOrFailure(schema, value, isValid, value);
   });

@@ -15,7 +15,6 @@ export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> impl
     super();
     (this as any).serializeKeys = serializeKeys;
     this.allow = 'all';
-    this.allowedProtocols = ['https'];
   }
 
   protected _validate(value: any): T | undefined {
@@ -26,7 +25,7 @@ export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> impl
 
     assert(
       validateUri(value, { allow: this._allow.allow, allowedProtocols: this.allowedProtocols }),
-      'Please enter a valid email'
+      'Please enter a valid URI'
     );
     return value;
   }

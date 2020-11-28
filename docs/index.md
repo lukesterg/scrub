@@ -167,10 +167,10 @@ Example: `scrub.uri({ allowTypes: 'all' })`.
 
 #### allowedProtocols
 
-The protocols which are allowed in the URI. If this value the only allowed protocol is https.
+The protocols which are allowed in the URI. If not specified any protocol is allowed.
 
 
-Example: `scrub.uri({ allowedProtocols: ['http', 'https'] })`.
+Example: `scrub.uri({ allowedProtocols: ['https'] })`.
 
 
 ### Password
