@@ -25,7 +25,7 @@ export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> impl
 
     assert(
       validateUri(value, { allow: this._allow.allow, allowedProtocols: this.allowedProtocols }),
-      'Please enter a valid email'
+      'Please enter a valid URI'
     );
     return value;
   }

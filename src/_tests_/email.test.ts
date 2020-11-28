@@ -1,4 +1,4 @@
-import { fields } from '..';
+import * as scrub from '..';
 import { successOrFailure } from './common';
 import { allDomainTests } from './domain.test';
 
@@ -26,7 +26,7 @@ const emailTests = userTests.concat(domainTests) as [any, string, boolean][];
 
 describe('email verification tests', () => {
   test.each(emailTests)('allow=%s value=%s isValid=%s', (allow, value, isValid) => {
-    const schema = fields.email({ allow: allow as any });
+    const schema = scrub.email({ allow: allow as any });
     successOrFailure(schema, value, isValid, value);
   });
 });
@@ -40,12 +40,12 @@ describe('schema test', () => {
   };
 
   test('default options', () => {
-    const schema = fields.email();
+    const schema = scrub.email();
     expect(schema.serialize()).toEqual(defaultSettings);
   });
 
   test('default options can be overridden', () => {
-    const schema = fields.email({ allow: ['ip'] });
+    const schema = scrub.email({ allow: ['ip'] });
     expect(schema.serialize()).toEqual({ ...defaultSettings, allow: ['ip'] });
   });
 });

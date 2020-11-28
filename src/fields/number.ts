@@ -1,4 +1,4 @@
-import { assert, copyFilteredObject, Empty, NoValue, ScrubError, ValidationField } from '../common';
+import { assert, copyFilteredObject, Empty, ScrubError, ValidationField } from '../common';
 import { AllowTypeConverter, ConversionCallback, AllowOptions, AllowTypesUserOptions } from '../validators/allow';
 import { Choices, ChoicesUserOptions, AllChoiceOptions } from '../validators/choice';
 import { MinMaxRangeUserOptions, Range, RangeLimitType } from '../validators/range';
@@ -18,7 +18,7 @@ const conversions: ConversionCallback<NumberAllowOptions> = {
   string: function (this: NumberValidator, value: any) {
     if (value === '') {
       assert(this.empty, 'Please enter a value');
-      return NoValue;
+      return;
     }
 
     // remove punctuation (ie: 123, 000).
@@ -100,7 +100,7 @@ class NumberValidator<T = number> extends ValidationField<T, Partial<NumberOptio
 
   protected _validate(value: any): T | undefined {
     value = this._allowedTypes.convert(value, conversions, this);
-    if (value === undefined && this.empty) return;
+    if (value === undefined && this.empty) return value;
     validateType(value, 'number');
     this._choices.test(value);
 
