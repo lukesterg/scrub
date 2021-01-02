@@ -18,6 +18,10 @@ export class DomainValidatorOptionsBase<T> extends StringValidator<T> implements
     (this as any).serializeKeys = serializeKeys;
   }
 
+  type() {
+    return super.type().concat(['domain']);
+  }
+
   get allow(): DomainValidationOptions {
     return this._allow.allow;
   }

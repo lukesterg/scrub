@@ -39,7 +39,8 @@ class ObjectValidationState<T> {
 
 export type CleanCallback<T> = (state: ObjectValidationState<T>) => void;
 
-export interface ObjectOptions<T> extends Partial<Undefined> {
+export interface ObjectOptions<T extends { [key: string]: ValidationField<unknown, unknown> }>
+  extends Partial<Undefined> {
   fields: T;
   additionalFields?: ObjectAdditionalFieldType;
   customValidation?: CleanCallback<T>;
@@ -47,9 +48,9 @@ export interface ObjectOptions<T> extends Partial<Undefined> {
 
 const serializeKeys = new Set(['fields', 'onUnknownField', 'additionalFields', 'customValidation']);
 
-export type ValidatorType = { [key: string]: ValidationField<unknown, unknown> };
+type ValidatorType = { [key: string]: ValidationField<unknown, unknown> };
 
-class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedType<Fields>>
+export class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedType<Fields>>
   extends ValidationField<ValidatedType<Fields> | CanBeUndefined, Partial<ObjectOptions<Fields>>>
   implements ObjectOptions<Fields> {
   serializeKeys = serializeKeys;
@@ -61,6 +62,10 @@ class ObjectValidator<Fields extends ValidatorType, CanBeUndefined = ValidatedTy
   constructor(fields: Fields) {
     super();
     this.fields = fields;
+  }
+
+  type() {
+    return ['object'];
   }
 
   private _getField(name: string) {

@@ -57,6 +57,10 @@ export class StringValidator<T = string>
 
   empty = false;
 
+  type() {
+    return ['string'];
+  }
+
   get transformString(): TransformStringType | undefined {
     return this._transformString ? [...this._transformString] : undefined;
   }

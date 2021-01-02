@@ -6,6 +6,10 @@ import { DomainOptions, DomainValidator, DomainValidatorOptionsBase } from './do
 export type EmailOptions<T = string> = DomainOptions<T>;
 
 export class EmailValidator<T = string> extends DomainValidatorOptionsBase<T> implements EmailOptions<T> {
+  type() {
+    return super.type().concat(['email']);
+  }
+
   get maxLength(): number {
     return (this._range.max as RangeLimitInclusiveOption)?.value || maximumEmailLength;
   }

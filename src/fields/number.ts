@@ -47,7 +47,9 @@ const conversions: ConversionCallback<NumberAllowOptions> = {
 };
 const serializeKeys = new Set<keyof NumberOptions>(['allowTypes', 'choices', 'empty', 'max', 'min', 'precision']);
 
-class NumberValidator<T = number> extends ValidationField<T, Partial<NumberOptions<T>>> implements NumberOptions<T> {
+export class NumberValidator<T = number>
+  extends ValidationField<T, Partial<NumberOptions<T>>>
+  implements NumberOptions<T> {
   readonly serializeKeys = serializeKeys;
 
   protected _range = new Range({ minInclusiveDefault: true, maxInclusiveDefault: true, units: '' });
@@ -56,6 +58,10 @@ class NumberValidator<T = number> extends ValidationField<T, Partial<NumberOptio
   protected _precision?: number;
 
   empty = false;
+
+  type() {
+    return ['number'];
+  }
 
   get min(): RangeLimitType {
     return this._range.min;

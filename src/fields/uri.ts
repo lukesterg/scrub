@@ -17,6 +17,10 @@ export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> impl
     this.allow = 'all';
   }
 
+  type() {
+    return super.type().concat(['uri']);
+  }
+
   protected _validate(value: any): T | undefined {
     value = super._validate(value);
     if (!value || value === '') {
