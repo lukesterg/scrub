@@ -16,13 +16,14 @@ export interface NumberOptions<T = number>
 
 const conversions: ConversionCallback<NumberAllowOptions> = {
   string: function (this: NumberValidator, value: any) {
+    // remove punctuation (ie: 123, 000).
+    value = value.replace(/[, ]/g, '');
+
     if (value === '') {
       assert(this.empty, 'Please enter a value');
       return;
     }
 
-    // remove punctuation (ie: 123, 000).
-    value = value.replace(/[^0-9.-]+/g, '');
     const match = (value as string).match(/^(-?\d*)(\.(\d*))?$/);
     assert(value === '.' || match !== null, 'Please enter a valid number');
 
