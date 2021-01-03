@@ -87,9 +87,7 @@ export abstract class ValidationField<Type, SerializeType> {
   abstract type(): string[];
 
   serialize(): SerializeType {
-    const result: any = {
-      type: this.type(),
-    };
+    const result: any = {};
     this.serializeKeys.forEach((key) => {
       const value = (this as any)[key];
       if (value === undefined) {

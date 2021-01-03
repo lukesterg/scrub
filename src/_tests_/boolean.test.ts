@@ -19,7 +19,6 @@ describe('serialization test', () => {
   const defaultSettings = {
     allowTypes: [],
     empty: false,
-    type: ['boolean'],
   };
 
   test('default options', () => {

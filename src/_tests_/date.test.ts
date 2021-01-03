@@ -20,7 +20,6 @@ describe('serialization test', () => {
   const defaultSettings = {
     allowTypes: [],
     empty: false,
-    type: ['date'],
   };
 
   test('default options', () => {
