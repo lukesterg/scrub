@@ -1,16 +1,16 @@
 import { interceptThrow, ScrubError } from '../common';
 import { assert } from '../common';
 
-export interface RangeLimitInclusiveOption {
-  value: number;
+export interface RangeLimitInclusiveOption<T = number> {
+  value: T;
   inclusive?: boolean;
 }
 
-export type RangeLimitType = RangeLimitInclusiveOption | number | undefined;
+export type RangeLimitType<T = number> = RangeLimitInclusiveOption<T> | T | undefined;
 
-export interface MinMaxRangeUserOptions {
-  min?: RangeLimitType;
-  max?: RangeLimitType;
+export interface MinMaxRangeUserOptions<T = number> {
+  min?: RangeLimitType<T>;
+  max?: RangeLimitType<T>;
 }
 
 export interface MinMaxLengthRangeUserOptions {
