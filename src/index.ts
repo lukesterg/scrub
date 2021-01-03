@@ -1,6 +1,7 @@
 import { ValidationField } from './common';
 
 export { ScrubError, ValidatorError, ObjectValidatorError, GetType } from './common';
+export { boolean, BooleanOptions, BooleanValidator } from './fields/boolean';
 export { string, StringOptions, StringValidator } from './fields/string';
 export { object, ObjectOptions, ObjectValidator } from './fields/object';
 export { number, NumberOptions, NumberValidator } from './fields/number';
