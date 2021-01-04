@@ -4,12 +4,18 @@ import { validateUri } from '../validators/uri';
 
 export interface UriOptions<T = string> extends DomainOptions<T> {
   allowedProtocols?: string[];
+  protocolOptional?: boolean;
 }
 
-export const serializeKeys = new Set<keyof UriOptions>([...domainSerializeKeys, 'allowedProtocols']);
+export const serializeKeys = new Set<keyof UriOptions>([
+  ...domainSerializeKeys,
+  'allowedProtocols',
+  'protocolOptional',
+]);
 
 export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> implements UriOptions<T> {
   allowedProtocols?: string[];
+  protocolOptional?: boolean;
 
   constructor() {
     super();
@@ -28,7 +34,11 @@ export class UriValidator<T = string> extends DomainValidatorOptionsBase<T> impl
     }
 
     assert(
-      validateUri(value, { allow: this._allow.allow, allowedProtocols: this.allowedProtocols }),
+      validateUri(value, {
+        allow: this._allow.allow,
+        allowedProtocols: this.allowedProtocols,
+        protocolOptional: this.protocolOptional,
+      }),
       'Please enter a valid URI'
     );
     return value;

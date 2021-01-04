@@ -3,10 +3,15 @@ import { validateDomain, DomainValidationOptions } from '../validators/domain';
 export interface UriValidationOptions {
   allowedProtocols?: string[];
   allow: DomainValidationOptions;
+  protocolOptional?: boolean;
 }
 
 export const validateUri = (uri: string, options: UriValidationOptions) => {
   let parsed: URL;
+
+  if (options.protocolOptional === true && !/:\/\//.test(uri)) {
+    uri = `http://${uri}`;
+  }
 
   try {
     parsed = new URL(uri);
