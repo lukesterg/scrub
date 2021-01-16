@@ -33,7 +33,7 @@ describe('serialization test', () => {
   });
 });
 
-describe('length test', () => {
+describe('range test', () => {
   test.each([
     [1, 0.9, true, true],
     [1, 1, false, true],

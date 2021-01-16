@@ -33,6 +33,10 @@ export class PasswordValidator<T = string> extends StringValidator<T> implements
     (this as any).serializeKeys = serializeKeys;
   }
 
+  type() {
+    return super.type().concat(['password']);
+  }
+
   protected _validate(value: any): T | undefined {
     value = super._validate(value);
     if (!value || value === '') {

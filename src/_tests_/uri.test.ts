@@ -5,7 +5,7 @@ import { successOrFailure } from './common';
 describe('uri tests', () => {
   // prettier-ignore
   const uriTests: [Partial<UriOptions>, string, boolean][] = [
-    [{empty: true}, '', false],
+    [{ empty: true }, '', false],
     [{}, 'a', false],
     [{}, 'http:', false],
     [{}, 'http://www.domain.com', true],
@@ -17,9 +17,11 @@ describe('uri tests', () => {
     // IPv6 does not seem to be supported in node
     // [{}, 'http://a:a@::1:3434/path?query=dfd#target', false],
     // [{}, 'http://[::1]:34/path?query=dfd#target', true],
-    [{ allowedProtocols: ['https']}, 'http://www.domain.com/path?query=dfd#target', false],
-    [{ allowedProtocols: ['https']}, 'https://www.domain.com/path?query=dfd#target', true],
+    [{ allowedProtocols: ['https'] }, 'http://www.domain.com/path?query=dfd#target', false],
+    [{ allowedProtocols: ['https'] }, 'https://www.domain.com/path?query=dfd#target', true],
 
+    [{}, 'www.domain.com', false],
+    [{protocolOptional: true}, 'www.domain.com', true],
   ];
 
   test.each(uriTests)('options=%s value=%s isValid=%s', (options, value, isValid) => {
