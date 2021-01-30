@@ -16,6 +16,10 @@ export interface DateOptions<T = Date>
 
 const conversions: ConversionCallback<DateAllowOptions> = {
   string: function (this: DateValidator, value: any) {
+    if (value === '') {
+      return;
+    }
+
     return new Date(value);
   },
   number: function (this: DateValidator, value: any) {
