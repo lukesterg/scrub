@@ -85,7 +85,6 @@ If this value is not specified only numbers are allowed.
 Example: `scrub.number({ allowTypes: 'string', precision: 4 })`.
 
 
-
 #### empty
 If allowTypes is `string` and empty is true the number will not be defined. If not specified a number must be entered.
 
@@ -120,6 +119,68 @@ Example: `scrub.number({ choices: [2, 4, 6, 8] })`.
 The maximum number of decimals. If this value is not specified then the number will be unchanged.
 
 Example: `scrub.number({ precision: 2 })`.
+
+### Boolean
+
+#### allowTypes
+Allow types can either be 'string', 'number' or 'all'. Numbers will convert a non-zero value to true and a zero value to false. A string will convert 'yes', 'true', '1', 't' to true and 'no', 'false', '0', 'f' to false.
+
+Example: `scrub.boolean({ allowTypes: 'all' })`.
+
+#### choices
+An array of items which the value is allowed to be. The default is any value is allowed.
+
+Example: `scrub.boolean({ choices: [true] })`.
+
+#### empty
+If true the field can result in an undefined value. If string conversions are allowed and the string is empty and empty is true, the value will be undefined.
+
+Example: `scrub.date({ empty: true )`.
+
+### Date
+
+#### allowTypes
+Allow types can either be 'string', 'number' or 'all'. Both numbers and string are parsed using the JavaScript date function (i.e.: new Date(value)). Numbers must be UNIX timestamps with milli-seconds precision and date strings can be in any format, it is recommended to parse year leading dates for compatibility.
+
+Example: `scrub.date({ allowTypes: 'all' })`.
+
+#### choices
+An array of items which the value is allowed to be. The default is any value is allowed.
+
+Example: `scrub.date({ choices: [new Date(2000, 1, 1), new Date(2000, 1, 2)] })`.
+
+#### empty
+If true the field can result in an undefined value. If string conversions are allowed and the string is empty and empty is true, the value will be undefined.
+
+Example: `scrub.date({ empty: true )`.
+
+#### min
+Specifies the minimum date allowed. This field can either be:
+* An object containing both a date and whether it is inclusive, or
+* A date which is the minimum value (inclusive).
+
+These are described in the examples below. If this value is not specified the number can be any value.
+
+Example: `scrub.date({ min: new Date(2000, 1, 1) })` or `scrub.date({ min: { value: new Date(2000, 1, 1), inclusive: false } })`.
+
+#### minRangeNow
+If this value is true then the date must be less than the current time.
+
+Example: `scrub.date({ minRangeNow: true })`.
+
+#### max
+Specifies the maximum date allowed. This field can either be:
+* An object containing both a date and whether it is inclusive, or
+* A number which is the maximum date (inclusive).
+
+These are described in the examples below. If this value is not specified the date can be any value.
+
+Example: `scrub.date({ max: new Date(2000, 1, 1) })` or `scrub.date({ max: { value: new Date(2000, 1, 1), inclusive: false } })`.
+
+#### maxRangeNow
+If this value is true then the date must be less than the current time.
+
+Example: `scrub.date({ maxRangeNow: true })`.
 
 ### Domain
 
@@ -169,9 +230,13 @@ Example: `scrub.uri({ allowTypes: 'all' })`.
 
 The protocols which are allowed in the URI. If not specified any protocol is allowed.
 
-
 Example: `scrub.uri({ allowedProtocols: ['https'] })`.
 
+#### protocolOptional
+
+If true the URI string does not need to include the protocol.
+
+Example: `scrub.uri({ protocolOptional: true })`.
 
 ### Password
 

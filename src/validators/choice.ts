@@ -29,7 +29,10 @@ export class Choices<T> implements ChoicesUserOptions<T> {
       throw new ScrubError('at least one value must be specified');
     }
 
-    this._error = `value must be one of ${arrayToCommaListString(arrayChoices)}`;
+    this._error =
+      arrayChoices.length > 1
+        ? `Value must be one of ${arrayToCommaListString(arrayChoices)}`
+        : `Value must be ${arrayChoices[0]}`;
     this._choices = new Set(arrayChoices);
   }
 

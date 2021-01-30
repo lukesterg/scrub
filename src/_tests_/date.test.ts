@@ -126,3 +126,26 @@ describe('choices', () => {
     successOrFailure(schema, value, valid, value);
   });
 });
+
+describe('empty tests', () => {
+  const requiredTests: [Date | string | undefined, boolean, boolean][] = [
+    [undefined, true, true],
+    [undefined, false, false],
+    ['', true, true],
+    ['', false, false],
+    ['2020-01-01', true, true],
+    ['2020-01-01', false, true],
+    [new Date(), true, true],
+    [new Date(), false, true],
+  ];
+  test.each(requiredTests)('value=%s empty=%s valid=%s', (value, empty, valid) => {
+    const schema = scrub.date({ empty, allowTypes: 'all' });
+    let expectedValue = value;
+    if (value === '') {
+      expectedValue = undefined;
+    } else if (typeof value === 'string') {
+      expectedValue = new Date(value);
+    }
+    successOrFailure(schema, value, valid, expectedValue);
+  });
+});

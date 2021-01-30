@@ -29,7 +29,7 @@ const conversions: ConversionCallback<BooleanAllowOptions> = {
       return false;
     }
 
-    assert(false, 'please enter a value');
+    assert(false, 'Please enter a value');
   },
 
   number: function (this: BooleanValidator, value: number) {
